@@ -1,7 +1,12 @@
 package anthony.cameralibrary;
 
 import android.content.Context;
+import android.hardware.Camera;
 import android.widget.ImageView;
+
+import java.util.List;
+
+import anthony.cameralibrary.util.ScreenUtils;
 
 /**
  * 主要功能:
@@ -19,11 +24,48 @@ public class CameraController {
         public Context context; //上下文
         public ICameraListenner iCameraListenner; //拍摄监听
         public ImageView previewImageView; //预览的imageview
+        public Camera.Size picSize;//拍摄的照片分辨率（必须是相机可支持的分辨率camera.getParameters().getPictureSize()）
+        public Camera.Size vidSize;//拍摄的视频拍摄分辨率（必须是相机可支持的分辨率camera.getParameters().getSupportedVideoSizes()）
 
 
         public CameraParams(Context c,ICameraListenner i){
             this.context=c;
             this.iCameraListenner=i;
+            this.picSize=getAjustSizeFromScreen(CustomCameraHelper.getInstance().getCameraInstance().getParameters().getSupportedPictureSizes());
+            this.vidSize=getAjustSizeFromScreen(CustomCameraHelper.getInstance().getCameraInstance().getParameters().getSupportedVideoSizes());
+        }
+        /**
+         * 从支持分辨率库中获取最适合屏幕分辨率大小的分辨率
+         * @param sizeList
+         * @return
+         */
+        public Camera.Size getAjustSizeFromScreen(List<Camera.Size> sizeList){
+            if(sizeList==null||sizeList.size()==0){
+                return null;
+            }
+            Camera.Size temp=null;
+            if(sizeList.size()>1){
+                for (int i=0;i<sizeList.size()-1;i++){
+                    for (int j=0;j<sizeList.size()-1-i;j++){
+                        if(absScreen(sizeList.get(j))>absScreen(sizeList.get(j+1))||((absScreen(sizeList.get(j))==absScreen(sizeList.get(j+1)))&&sizeList.get(j+1).height>sizeList.get(j).height)){
+                            temp=sizeList.get(j);
+                            sizeList.set(j,sizeList.get(j+1));
+                            sizeList.set(j+1,temp);
+                        }
+                    }
+                }
+            }
+
+//            for (Camera.Size item:sizeList){
+//                Log.e("冒泡","........绝对值："+Math.abs(ScreenUtils.getScreenWidth(context)-item.width)+"..........."+item.width+":"+item.height+"           原：  "+ScreenUtils.getScreenWidth(context)+":"+ScreenUtils.getScreenHeight(context));
+//            }
+            return sizeList.get(0);
+        }
+
+        //计算width绝对值
+        private int absScreen(Camera.Size size){
+            int screenWidth= ScreenUtils.getScreenWidth(context);
+            return Math.abs(screenWidth-size.width);
         }
     }
 

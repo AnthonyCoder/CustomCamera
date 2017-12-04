@@ -62,6 +62,7 @@ public class VideoActivity extends Activity implements View.OnClickListener{
             ((ViewGroup) mPreview.getParent()).removeAllViews();
         preview.addView(mPreview);
         settingsFragment=new SettingsFragment();
+        //初始化相机参数（包括相机的拍摄分辨率、闪光灯模式等...）
         SettingsFragment.passCamera(CustomCameraHelper.getInstance().getCameraInstance());
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
         SettingsFragment.setDefault(PreferenceManager.getDefaultSharedPreferences(this));
@@ -115,7 +116,7 @@ public class VideoActivity extends Activity implements View.OnClickListener{
                 }else{
                     getFragmentManager().popBackStack();
                 }
-
+//                startActivity(new Intent(VideoActivity.this,SettingsFragment.class));
                 break;
             case R.id.iv_cancle://返回
                 finish();
