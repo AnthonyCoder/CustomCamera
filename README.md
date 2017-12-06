@@ -26,7 +26,7 @@
 
   如果需要在另外的线程绘制界面、需要迅速的更新界面或则渲染UI界面需要较长的时间，这种情况就要使用SurfaceView了。SurfaceView中包含一个Surface对象，而Surface是可以在后台线程中绘制的。Surface属于OPhone底层显示系统,SurfaceView的性质决定了其比较适合一些场景：需要界面迅速更新、对帧率要求较高的情况。
 
-SurfaceView的核心提供了两个线程：UI线程和渲染线程。应该注意的是：
+  SurfaceView的核心提供了两个线程：UI线程和渲染线程。应该注意的是：
    a.所有的SurfaceView和SurfaceHolder.Callback的方法都应该在UI线程里调用，一般来说就是应用程序的主线程。渲染线程所要访问的各种变量应该做同步处理。
    b.由于surface可能被销毁，它只在SurfaceHolder.Callback.surfaceCreated()和SurfaceHoledr.Callback.surfaceDestroyed()之间有效，所以要确保渲染线程访问的是合法有效地surface.
 
