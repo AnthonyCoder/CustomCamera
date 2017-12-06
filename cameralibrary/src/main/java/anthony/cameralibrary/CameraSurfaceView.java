@@ -1,11 +1,15 @@
 package anthony.cameralibrary;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
 import android.util.AttributeSet;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.widget.ImageView;
+
+import anthony.cameralibrary.constan.ECameraType;
+import anthony.cameralibrary.iml.ICameraListenner;
 
 /**
  * 主要功能:
@@ -30,6 +34,7 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
     @Override
     public void surfaceCreated(SurfaceHolder srfaceHolder) {
         CustomCameraHelper.getInstance().create();
+
     }
 
     @Override
@@ -92,11 +97,5 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
             CustomCameraHelper.getInstance().bind(cameraSurfaceView);
             return cameraSurfaceView;
         }
-//        public CameraSurfaceView getCameraViewInstance(Context c){
-//            CameraSurfaceView cameraSurfaceView = null;
-//            if(cameraSurfaceView!=null){
-//                cameraSurfaceView=new CameraSurfaceView(P.context);
-//            }
-//        }
     }
 }

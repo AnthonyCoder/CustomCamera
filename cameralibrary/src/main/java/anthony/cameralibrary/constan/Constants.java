@@ -1,4 +1,4 @@
-package anthony.cameralibrary;
+package anthony.cameralibrary.constan;
 
 /**
  * 主要功能:

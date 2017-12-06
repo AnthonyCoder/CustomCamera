@@ -1,4 +1,4 @@
-package anthony.cameralibrary;
+package anthony.cameralibrary.iml;
 
 /**
  * 主要功能:
