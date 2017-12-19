@@ -38,8 +38,8 @@ public class CameraController {
         }
         /**
          * 从支持分辨率库中获取最适合屏幕分辨率大小的分辨率
-         * @param sizeList
-         * @return
+         * @param sizeList 传来的分辨率组集合
+         * @return 返回的最适合屏幕的分辨率组
          */
         public Camera.Size getAjustSizeFromScreen(List<Camera.Size> sizeList){
             if(sizeList==null||sizeList.size()==0){
