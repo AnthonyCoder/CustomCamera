@@ -15,8 +15,8 @@ import android.widget.Toast;
 import anthony.camerademo.R;
 import anthony.cameralibrary.CameraSurfaceView;
 import anthony.cameralibrary.CustomCameraHelper;
-import anthony.cameralibrary.ECameraType;
-import anthony.cameralibrary.ICameraListenner;
+import anthony.cameralibrary.constan.ECameraType;
+import anthony.cameralibrary.iml.ICameraListenner;
 
 /**
  * 主要功能:

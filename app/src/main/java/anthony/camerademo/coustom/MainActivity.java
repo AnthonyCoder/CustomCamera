@@ -8,7 +8,7 @@ import android.support.v7.app.AlertDialog;
 import android.view.View;
 
 import anthony.camerademo.R;
-import anthony.cameralibrary.PermissionConstant;
+import anthony.cameralibrary.constan.PermissionConstant;
 import permissions.dispatcher.NeedsPermission;
 import permissions.dispatcher.OnNeverAskAgain;
 import permissions.dispatcher.OnPermissionDenied;

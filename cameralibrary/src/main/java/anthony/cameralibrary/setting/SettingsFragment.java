@@ -1,4 +1,4 @@
-package anthony.camerademo.coustom;
+package anthony.cameralibrary.setting;
 
 import android.content.SharedPreferences;
 import android.hardware.Camera;
@@ -11,7 +11,7 @@ import android.preference.PreferenceGroup;
 import java.util.ArrayList;
 import java.util.List;
 
-import anthony.camerademo.R;
+import anthony.cameralibrary.R;
 import anthony.cameralibrary.constan.Constants;
 
 

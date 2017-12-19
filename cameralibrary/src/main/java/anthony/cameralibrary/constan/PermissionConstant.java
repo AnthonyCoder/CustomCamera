@@ -1,4 +1,4 @@
-package anthony.cameralibrary;
+package anthony.cameralibrary.constan;
 
 import android.Manifest;
 

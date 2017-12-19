@@ -6,6 +6,8 @@ import android.widget.ImageView;
 
 import java.util.List;
 
+import anthony.cameralibrary.constan.ECameraType;
+import anthony.cameralibrary.iml.ICameraListenner;
 import anthony.cameralibrary.util.ScreenUtils;
 
 /**
@@ -56,9 +58,6 @@ public class CameraController {
                 }
             }
 
-//            for (Camera.Size item:sizeList){
-//                Log.e("冒泡","........绝对值："+Math.abs(ScreenUtils.getScreenWidth(context)-item.width)+"..........."+item.width+":"+item.height+"           原：  "+ScreenUtils.getScreenWidth(context)+":"+ScreenUtils.getScreenHeight(context));
-//            }
             return sizeList.get(0);
         }
 
