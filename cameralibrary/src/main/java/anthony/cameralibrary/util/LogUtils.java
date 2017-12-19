@@ -5,7 +5,9 @@ import android.util.Log;
 import android.widget.Toast;
 
 /**
- * Created by guest on 2017/12/19.
+ * 主要功能:
+ * Created by wz on 2017/12/19
+ * 修订历史:
  */
 
 public class LogUtils {

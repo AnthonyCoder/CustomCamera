@@ -7,11 +7,6 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.widget.ImageView;
 
-import com.orhanobut.logger.AndroidLogAdapter;
-import com.orhanobut.logger.FormatStrategy;
-import com.orhanobut.logger.Logger;
-import com.orhanobut.logger.PrettyFormatStrategy;
-
 import anthony.cameralibrary.constant.ECameraType;
 import anthony.cameralibrary.iml.ICameraListenner;
 
@@ -54,13 +49,6 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
     public static class Builder{
         private CameraController.CameraParams P;
         public Builder(Context context,ICameraListenner iCameraListenner){
-            Logger.addLogAdapter(new AndroidLogAdapter(){
-                @Override
-                public boolean isLoggable(int priority, String tag) {
-                    return true;
-                }
-            });
-
             this.P=new CameraController.CameraParams(context,iCameraListenner);
         }
 
