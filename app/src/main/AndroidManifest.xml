@@ -47,7 +47,7 @@
         </activity>
         <activity android:name=".coustom.PictureActivity"/>
         <activity android:name=".coustom.VideoActivity"/>
-        <activity android:name=".coustom.SettingsFragment"/>
+        <activity android:name=".coustom.ShowActivity"/>
     </application>
 
 </manifest>

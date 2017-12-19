@@ -26,12 +26,13 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
-import anthony.cameralibrary.constan.Constants;
-import anthony.cameralibrary.constan.ECameraType;
+import anthony.cameralibrary.constant.Constants;
+import anthony.cameralibrary.constant.ECameraType;
 import anthony.cameralibrary.iml.ICameraListenner;
+import anthony.cameralibrary.util.LogUtils;
 
 /**
- * 主要功能:
+ * 主要功能:辅助类
  * Created by wz on 2017/11/20
  * 修订历史:
  */
@@ -46,20 +47,21 @@ public class CustomCameraHelper {
     private MediaRecorder mMediaRecorder;//视频录制对象
     private CameraController.CameraParams coustomParams;
     private Camera.Parameters parameters;
+
     //绑定SurfaceView
-    public void bind(CameraSurfaceView cameraSurfaceView){
-        Log.e("相机","............bind");
+    public void bind(CameraSurfaceView cameraSurfaceView) {
+        LogUtils.d("............bind");
         cameraSurfaceView.getHolder().addCallback(cameraSurfaceView);
-        this.cameraSurfaceView=cameraSurfaceView;
-        this.coustomParams=cameraSurfaceView.getCameraParams();
-        this.iCameraListenner=coustomParams.iCameraListenner;
-        this.context=coustomParams.context;
+        this.cameraSurfaceView = cameraSurfaceView;
+        this.coustomParams = cameraSurfaceView.getCameraParams();
+        this.iCameraListenner = coustomParams.iCameraListenner;
+        this.context = coustomParams.context;
     }
 
-    public void create(){
-        Log.e("相机","............create");
-         getCameraInstance();
-        if(mCamera==null){
+    public void create() {
+        LogUtils.d("............create");
+        getCameraInstance();
+        if (mCamera == null) {
             return;
         }
         try {
@@ -69,11 +71,12 @@ public class CustomCameraHelper {
             iCameraListenner.error("Error setting camera preview: " + e.getMessage());
         }
     }
+
     public Camera getCameraInstance() {
         if (mCamera == null) {
             try {
                 mCamera = Camera.open();
-                parameters=mCamera.getParameters();
+                parameters = mCamera.getParameters();
                 List<String> focusModes = parameters.getSupportedFocusModes();
                 for (String mode : focusModes) {
                     if (mode.equals(Camera.Parameters.FOCUS_MODE_AUTO)) {
@@ -87,9 +90,10 @@ public class CustomCameraHelper {
         }
         return mCamera;
     }
+
     public void change() {
-        Log.e("相机","............change");
-        if(mCamera==null){
+        LogUtils.d("............change");
+        if (mCamera == null) {
             return;
         }
         int rotation = getDisplayOrientation();
@@ -99,13 +103,14 @@ public class CustomCameraHelper {
         adjustDisplayRatio(rotation);
 
     }
+
     public void destroyed() {
-        Log.e("相机","............destroyed");
-        if(mCamera==null){
+        LogUtils.d("............destroyed");
+        if (mCamera == null) {
             return;
         }
         cameraSurfaceView.getHolder().removeCallback(cameraSurfaceView);
-        if(mCamera!=null){
+        if (mCamera != null) {
             mCamera.setPreviewCallback(null);
             mCamera.cancelAutoFocus();
             mCamera.stopPreview();
@@ -124,6 +129,7 @@ public class CustomCameraHelper {
     /**
      * 用于根据手机方向获得相机预览画面旋转的角度
      * 校正拍照的角度
+     *
      * @return 返回适应的角度
      */
     public int getDisplayOrientation() {
@@ -155,7 +161,7 @@ public class CustomCameraHelper {
 
     //自适应预览图片尺寸（防止预览画面变形）
     private void adjustDisplayRatio(int rotation) {
-        ViewGroup parent = ((ViewGroup)cameraSurfaceView.getParent());
+        ViewGroup parent = ((ViewGroup) cameraSurfaceView.getParent());
         Rect rect = new Rect();
         parent.getLocalVisibleRect(rect);
         int width = rect.width();
@@ -183,15 +189,13 @@ public class CustomCameraHelper {
     }
 
     //开始拍照
-    public void takePicture(){
+    public void takePicture() {
         mCamera.stopPreview();
-        Camera.Size pictureSize=coustomParams.picSize;
-        if(pictureSize==null){
-            iCameraListenner.error("相机没有可支持的拍照分辨率参数");
+        if (getSize() == null) {
             return;
         }
-        Log.e("相机","......................w:"+pictureSize.width+"。。。。。。。h:"+ pictureSize.height);
-        parameters.setPictureSize(pictureSize.width, pictureSize.height);
+        LogUtils.d("......................w:" + getSize()[0] + "。。。。。。。h:" + getSize()[1]);
+        parameters.setPictureSize(getSize()[0], getSize()[1]);
         mCamera.setParameters(parameters);
         mCamera.startPreview();
         mCamera.takePicture(null, null, new Camera.PictureCallback() {
@@ -206,7 +210,7 @@ public class CustomCameraHelper {
                     FileOutputStream fos = new FileOutputStream(pictureFile);
                     fos.write(data);
                     fos.close();
-                    if(coustomParams.previewImageView!=null){
+                    if (coustomParams.previewImageView != null) {
                         coustomParams.previewImageView.setImageURI(outputMediaFileUri);
                     }
                     camera.startPreview();
@@ -219,7 +223,61 @@ public class CustomCameraHelper {
         });
     }
 
-    //开始录制
+    //获取分辨率
+    private int[] getSize() {
+        int[] sizeList = new int[2];
+        if (coustomParams.loadSettingParams) {//本地加载
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(coustomParams.context);
+            if (coustomParams.cameraType == ECameraType.CAMERA_TAKE_PHOTO) {//拍照
+                String prefPicSize = prefs.getString(Constants.KEY_PREF_PIC_SIZE, "");
+                if (prefPicSize == null || prefPicSize.trim().isEmpty()) {//本地没有 就使用默认或者用户定义的分辨率
+                    Camera.Size picize = coustomParams.picSize;
+                    if (picize == null) {
+                        iCameraListenner.error("相机没有可支持的拍照分辨率参数");
+                        return null;
+                    }
+                    prefPicSize = picize.width + "x" + picize.height;
+                }
+                String[] split = prefPicSize.split("x");
+                sizeList[0] = Integer.parseInt(split[0].trim());
+                sizeList[1] = Integer.parseInt(split[1].trim());
+                return sizeList;
+            } else if (coustomParams.cameraType == ECameraType.CAMERA_VIDEO) {//拍视频
+                String prefVideoSize = prefs.getString(Constants.KEY_PREF_VIDEO_SIZE, "");
+                if (prefVideoSize == null || prefVideoSize.trim().isEmpty()) {
+                    Camera.Size videoSize = coustomParams.vidSize;
+                    if (videoSize == null) {
+                        iCameraListenner.error("相机没有可支持的视频分辨率参数");
+                        return null;
+                    }
+                    prefVideoSize = videoSize.width + "x" + videoSize.height;
+                }
+                String[] split = prefVideoSize.split("x");
+                sizeList[0] = Integer.parseInt(split[0].trim());
+                sizeList[1] = Integer.parseInt(split[1].trim());
+                return sizeList;
+            }
+            return null;
+
+        } else {//加载用户配置参数
+            if (coustomParams.cameraType == ECameraType.CAMERA_TAKE_PHOTO) {//拍照
+                sizeList[0] = coustomParams.picSize.width;
+                sizeList[1] = coustomParams.picSize.height;
+                return sizeList;
+            } else if (coustomParams.cameraType == ECameraType.CAMERA_VIDEO) {//视频
+                sizeList[0] = coustomParams.vidSize.width;
+                sizeList[1] = coustomParams.vidSize.height;
+                return sizeList;
+            }
+            return null;
+        }
+    }
+
+    /**
+     * 开始录制
+     *
+     * @return
+     */
     private boolean startRecording() {
         if (prepareVideoRecorder()) {
             mMediaRecorder.start();
@@ -233,8 +291,16 @@ public class CustomCameraHelper {
     //停止录制
     public void stopRecording() {
         if (mMediaRecorder != null) {
-            mMediaRecorder.stop();
-            if(coustomParams.previewImageView!=null){//预览视频第一帧的图片
+            try {
+                mMediaRecorder.setOnErrorListener(null);
+                mMediaRecorder.setOnInfoListener(null);
+                mMediaRecorder.setPreviewDisplay(null);
+                mMediaRecorder.stop();
+            } catch (RuntimeException stopException) {
+                //handle cleanup here
+            }
+
+            if (coustomParams.previewImageView != null) {//预览视频第一帧的图片
                 Bitmap thumbnail = ThumbnailUtils.createVideoThumbnail(outputMediaFileUri.getPath(), MediaStore.Video.Thumbnails.MINI_KIND);
                 coustomParams.previewImageView.setImageBitmap(thumbnail);
             }
@@ -254,25 +320,19 @@ public class CustomCameraHelper {
 
         mCamera.unlock();
         mMediaRecorder.setCamera(mCamera);
-
-        mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.CAMCORDER);
-        mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
-
+        try {
+            mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.CAMCORDER);
+            mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
+        } catch (Exception e) {
+            iCameraListenner.error("请检查视频录制权限是否打开");
+        }
+        if (getSize() == null) {
+            return false;
+        }
         mMediaRecorder.setProfile(CamcorderProfile.get(CamcorderProfile.QUALITY_HIGH));
 
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(coustomParams.context);
-        String prefVideoSize = prefs.getString(Constants.KEY_PREF_VIDEO_SIZE, "");
-        if(prefVideoSize==null||prefVideoSize.trim().isEmpty()){
-            Camera.Size videoSize=coustomParams.vidSize;
-            if(videoSize==null){
-                iCameraListenner.error("相机没有可支持的视频分辨率参数");
-                return false;
-            }
-            prefVideoSize=videoSize.width+"x"+videoSize.height;
-        }
-        String[] split = prefVideoSize.split("x");
-        Log.e("相机","......................w:"+split[0]+"。。。。。。。h:"+split[1]);
-        mMediaRecorder.setVideoSize(Integer.parseInt(split[0]), Integer.parseInt(split[1]));
+        Log.e("相机", "......................w:" + getSize()[0] + "。。。。。。。h:" + getSize()[1]);
+        mMediaRecorder.setVideoSize(getSize()[0], getSize()[1]);
 
         mMediaRecorder.setOutputFile(getOutputMediaFile(ECameraType.CAMERA_VIDEO).toString());
 
@@ -283,16 +343,17 @@ public class CustomCameraHelper {
         try {
             mMediaRecorder.prepare();
         } catch (IllegalStateException e) {
-            iCameraListenner.error( "IllegalStateException preparing MediaRecorder: " + e.getMessage());
+            iCameraListenner.error("IllegalStateException preparing MediaRecorder: " + e.getMessage());
             releaseMediaRecorder();
             return false;
         } catch (IOException e) {
-            iCameraListenner.error( "IOException preparing MediaRecorder: " + e.getMessage());
+            iCameraListenner.error("IOException preparing MediaRecorder: " + e.getMessage());
             releaseMediaRecorder();
             return false;
         }
         return true;
     }
+
     //释放录制对象实例
     private void releaseMediaRecorder() {
         if (mMediaRecorder != null) {
@@ -305,32 +366,35 @@ public class CustomCameraHelper {
 
     /**
      * 打开相机开始拍照或者录制
+     *
      * @return 是否处于录制中的状态
      */
-    public boolean startCamera(){
-        if(coustomParams.cameraType!=null){
-            if(coustomParams.cameraType==ECameraType.CAMERA_TAKE_PHOTO){//拍照
+    public boolean startCamera() {
+        if (coustomParams.cameraType != null) {
+            if (coustomParams.cameraType == ECameraType.CAMERA_TAKE_PHOTO) {//拍照
                 takePicture();
                 return true;
-            }else if (coustomParams.cameraType==ECameraType.CAMERA_VIDEO){//录制视频
+            } else if (coustomParams.cameraType == ECameraType.CAMERA_VIDEO) {//录制视频
                 return startRecording();
             }
         }
         return false;
     }
+
     /**
      * 获取输出文件
+     *
      * @param type 照片 或者视频
      * @return 输出文件
      */
     private File getOutputMediaFile(ECameraType type) {
         String dirPath;
-        if( coustomParams.dirPath==null){
-            dirPath="default";
-        }else{
-            dirPath=coustomParams.dirPath;
+        if (coustomParams.dirName == null) {
+            dirPath = "default";
+        } else {
+            dirPath = coustomParams.dirName;
         }
-        File mediaStorageDir = new File(Environment.getExternalStorageDirectory(), dirPath+File.separator+(type==ECameraType.CAMERA_TAKE_PHOTO?"image":"video"));
+        File mediaStorageDir = new File(Environment.getExternalStorageDirectory(), dirPath + File.separator + (type == ECameraType.CAMERA_TAKE_PHOTO ? "image" : "video"));
         if (!mediaStorageDir.exists()) {
             if (!mediaStorageDir.mkdirs()) {
                 iCameraListenner.error("failed to create directory");
@@ -340,36 +404,38 @@ public class CustomCameraHelper {
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
         File mediaFile;
         if (type == ECameraType.CAMERA_TAKE_PHOTO) {
-            if(coustomParams.path!=null){
+            if (coustomParams.path != null) {
                 mediaFile = new File(coustomParams.path);
-            }else{
-                String fileName=coustomParams.fileName==null? "IMG_" + timeStamp + ".jpg":coustomParams.fileName;
-                mediaFile = new File(mediaStorageDir.getPath() + File.separator + File.separator+
+            } else {
+                String fileName = coustomParams.fileName == null ? "IMG_" + timeStamp + ".jpg" : coustomParams.fileName;
+                mediaFile = new File(mediaStorageDir.getPath() + File.separator + File.separator +
                         fileName);
             }
 
             outputMediaFileType = "image/*";
         } else if (type == ECameraType.CAMERA_VIDEO) {
-            String fileName=coustomParams.fileName==null? "VID_" + timeStamp + ".mp4":coustomParams.fileName;
-            mediaFile = new File(mediaStorageDir.getPath() + File.separator + File.separator+
+            String fileName = coustomParams.fileName == null ? "VID_" + timeStamp + ".mp4" : coustomParams.fileName;
+            mediaFile = new File(mediaStorageDir.getPath() + File.separator + File.separator +
                     fileName);
             outputMediaFileType = "video/*";
         } else {
             return null;
         }
         outputMediaFileUri = Uri.fromFile(mediaFile);
-        Log.e("相机",".......路径："+mediaFile.getAbsolutePath());
+        LogUtils.d(".......路径：" + mediaFile.getAbsolutePath());
         return mediaFile;
     }
 
     /**
      * 获取CoustomCameraHelper实例
+     *
      * @return 辅助类实例
      */
-    public static CustomCameraHelper getInstance(){
+    public static CustomCameraHelper getInstance() {
         return instance;
     }
 
-
-
+    public Uri getOutputMediaFileUri() {
+        return outputMediaFileUri;
+    }
 }

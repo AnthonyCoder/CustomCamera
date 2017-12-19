@@ -8,7 +8,7 @@ import android.support.v7.app.AlertDialog;
 import android.view.View;
 
 import anthony.camerademo.R;
-import anthony.cameralibrary.constan.PermissionConstant;
+import anthony.cameralibrary.constant.CameraPermissionConstant;
 import permissions.dispatcher.NeedsPermission;
 import permissions.dispatcher.OnNeverAskAgain;
 import permissions.dispatcher.OnPermissionDenied;
@@ -40,20 +40,20 @@ public class MainActivity extends Activity {
         });
     }
 
-    @NeedsPermission({PermissionConstant.CAMERA, PermissionConstant.WRITE_EXTERNAL_STORAGE})
+    @NeedsPermission({CameraPermissionConstant.CAMERA, CameraPermissionConstant.WRITE_EXTERNAL_STORAGE})
     void openCameraToPic() {
         startActivity(new Intent(MainActivity.this,PictureActivity.class));
     }
-    @NeedsPermission({PermissionConstant.CAMERA, PermissionConstant.WRITE_EXTERNAL_STORAGE})
+    @NeedsPermission({CameraPermissionConstant.CAMERA, CameraPermissionConstant.RECORD_AUDIO, CameraPermissionConstant.WRITE_EXTERNAL_STORAGE})
     void openCameraToVideo() {
         startActivity(new Intent(MainActivity.this,VideoActivity.class));
     }
-    @OnPermissionDenied({PermissionConstant.CAMERA, PermissionConstant.WRITE_EXTERNAL_STORAGE})
+    @OnPermissionDenied({CameraPermissionConstant.CAMERA, CameraPermissionConstant.WRITE_EXTERNAL_STORAGE})
     void permissionDenied() {
         new AlertDialog.Builder(MainActivity.this).setTitle("拒绝提示").setMessage("您拒绝了该权限，将不能访问相机进行拍照").setCancelable(true).show();
     }
 
-    @OnNeverAskAgain({PermissionConstant.CAMERA, PermissionConstant.WRITE_EXTERNAL_STORAGE})
+    @OnNeverAskAgain({CameraPermissionConstant.CAMERA, CameraPermissionConstant.WRITE_EXTERNAL_STORAGE})
     void neverAskAgain() {
         new AlertDialog.Builder(MainActivity.this).setTitle("权限提示").setMessage("请你允许相机权限和读写文件的权限").setCancelable(true).show();
     }
