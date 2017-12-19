@@ -18,8 +18,6 @@ import android.view.Surface;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 
-import com.orhanobut.logger.Logger;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -31,6 +29,7 @@ import java.util.List;
 import anthony.cameralibrary.constant.Constants;
 import anthony.cameralibrary.constant.ECameraType;
 import anthony.cameralibrary.iml.ICameraListenner;
+import anthony.cameralibrary.util.LogUtils;
 
 /**
  * 主要功能:辅助类
@@ -53,7 +52,7 @@ public class CustomCameraHelper {
      * @param cameraSurfaceView
      */
     public void bind(CameraSurfaceView cameraSurfaceView){
-        Logger.d("............bind");
+        LogUtils.d("............bind");
         cameraSurfaceView.getHolder().addCallback(cameraSurfaceView);
         this.cameraSurfaceView=cameraSurfaceView;
         this.coustomParams=cameraSurfaceView.getCameraParams();
@@ -62,7 +61,7 @@ public class CustomCameraHelper {
     }
 
     public void create(){
-        Logger.d("............create");
+        LogUtils.d("............create");
          getCameraInstance();
         if(mCamera==null){
             return;
@@ -93,7 +92,7 @@ public class CustomCameraHelper {
         return mCamera;
     }
     public void change() {
-        Logger.d("............change");
+        LogUtils.d("............change");
         if(mCamera==null){
             return;
         }
@@ -105,7 +104,7 @@ public class CustomCameraHelper {
 
     }
     public void destroyed() {
-        Logger.d("............destroyed");
+        LogUtils.d("............destroyed");
         if(mCamera==null){
             return;
         }
@@ -198,7 +197,7 @@ public class CustomCameraHelper {
         if(getSize()==null){
             return;
         }
-        Logger.d("......................w:"+getSize()[0]+"。。。。。。。h:"+ getSize()[1]);
+        LogUtils.d("......................w:"+getSize()[0]+"。。。。。。。h:"+ getSize()[1]);
         parameters.setPictureSize(getSize()[0], getSize()[1]);
         mCamera.setParameters(parameters);
         mCamera.startPreview();
@@ -329,7 +328,7 @@ public class CustomCameraHelper {
         }
         mMediaRecorder.setProfile(CamcorderProfile.get(CamcorderProfile.QUALITY_HIGH));
 
-        Logger.d("......................w:"+getSize()[0]+"。。。。。。。h:"+getSize()[1]);
+        Log.e("相机","......................w:"+getSize()[0]+"。。。。。。。h:"+getSize()[1]);
         mMediaRecorder.setVideoSize(getSize()[0], getSize()[1]);
 
         mMediaRecorder.setOutputFile(getOutputMediaFile(ECameraType.CAMERA_VIDEO).toString());
@@ -418,7 +417,7 @@ public class CustomCameraHelper {
             return null;
         }
         outputMediaFileUri = Uri.fromFile(mediaFile);
-        Logger.d(".......路径："+mediaFile.getAbsolutePath());
+        LogUtils.d(".......路径："+mediaFile.getAbsolutePath());
         return mediaFile;
     }
 

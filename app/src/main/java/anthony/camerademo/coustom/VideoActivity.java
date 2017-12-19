@@ -61,7 +61,6 @@ public class VideoActivity extends Activity implements View.OnClickListener,ICam
     }
 
     private void initCamera() {
-        Log.e("相机", "............initCamera");
         mPreview = new CameraSurfaceView.Builder(mContext, this)
                 .setCameraType(ECameraType.CAMERA_VIDEO)
                 .setLoadSettingParams(true)
@@ -86,7 +85,6 @@ public class VideoActivity extends Activity implements View.OnClickListener,ICam
      */
     @Override
     public void onPause() {
-        Log.e("相机", ".........Activity...onPause");
         CustomCameraHelper.getInstance().destroyed();
         if (mPreview != null) {
             mPreview.setVisibility(View.INVISIBLE);
@@ -97,7 +95,6 @@ public class VideoActivity extends Activity implements View.OnClickListener,ICam
 
     @Override
     public void onResume() {
-        Log.e("相机", ".........Activity...onResume");
         if (mPreview != null) {
             if (mPreview.getVisibility() == View.INVISIBLE) {
                 initCamera();

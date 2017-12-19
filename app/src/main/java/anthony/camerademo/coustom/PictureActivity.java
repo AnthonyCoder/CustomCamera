@@ -60,7 +60,6 @@ public class PictureActivity extends Activity implements View.OnClickListener,IC
     }
 
     private void initCamera() {
-        Log.e("相机", "............initCamera");
         mPreview = new CameraSurfaceView.Builder(mContext, this)
                 .setCameraType(ECameraType.CAMERA_TAKE_PHOTO)
                 .setLoadSettingParams(true)
@@ -79,7 +78,6 @@ public class PictureActivity extends Activity implements View.OnClickListener,IC
      */
     @Override
     public void onPause() {
-        Log.e("相机", ".........Activity...onPause");
         CustomCameraHelper.getInstance().destroyed();
         if (mPreview != null) {
             mPreview.setVisibility(View.INVISIBLE);
