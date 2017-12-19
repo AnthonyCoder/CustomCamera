@@ -42,10 +42,7 @@ public class CustomCameraHelper {
     private MediaRecorder mMediaRecorder;//视频录制对象
     private CameraController.CameraParams coustomParams;
     private Camera.Parameters parameters;
-    /**
-     * 绑定SurfaceView
-     * @param cameraSurfaceView
-     */
+    //绑定SurfaceView
     public void bind(CameraSurfaceView cameraSurfaceView){
         Log.e("相机","............bind");
         cameraSurfaceView.getHolder().addCallback(cameraSurfaceView);
@@ -123,7 +120,7 @@ public class CustomCameraHelper {
     /**
      * 用于根据手机方向获得相机预览画面旋转的角度
      * 校正拍照的角度
-     * @return
+     * @return 返回适应的角度
      */
     public int getDisplayOrientation() {
         android.hardware.Camera.CameraInfo camInfo =
@@ -152,10 +149,7 @@ public class CustomCameraHelper {
         return result;
     }
 
-    /**
-     * 自适应预览图片尺寸（防止预览画面变形）
-     * @param rotation
-     */
+    //自适应预览图片尺寸（防止预览画面变形）
     private void adjustDisplayRatio(int rotation) {
         ViewGroup parent = ((ViewGroup)cameraSurfaceView.getParent());
         Rect rect = new Rect();
@@ -184,9 +178,7 @@ public class CustomCameraHelper {
         }
     }
 
-    /**
-     * 开始拍照
-     */
+    //开始拍照
     public void takePicture(){
         mCamera.stopPreview();
         Camera.Size pictureSize=coustomParams.picSize;
@@ -223,10 +215,7 @@ public class CustomCameraHelper {
         });
     }
 
-    /**
-     * 开始录制
-     * @return
-     */
+    //开始录制
     private boolean startRecording() {
         if (prepareVideoRecorder()) {
             mMediaRecorder.start();
@@ -237,9 +226,7 @@ public class CustomCameraHelper {
         return false;
     }
 
-    /**
-     * 停止录制
-     */
+    //停止录制
     public void stopRecording() {
         if (mMediaRecorder != null) {
             mMediaRecorder.stop();
@@ -256,10 +243,7 @@ public class CustomCameraHelper {
         return mMediaRecorder != null;
     }
 
-    /**
-     * 准备视频录制
-     * @return
-     */
+    //准备视频录制
     private boolean prepareVideoRecorder() {
         mCamera = getCameraInstance();
         mMediaRecorder = new MediaRecorder();
@@ -305,9 +289,7 @@ public class CustomCameraHelper {
         }
         return true;
     }
-    /**
-     * 释放录制对象实例
-     */
+    //释放录制对象实例
     private void releaseMediaRecorder() {
         if (mMediaRecorder != null) {
             mMediaRecorder.reset();
@@ -335,7 +317,7 @@ public class CustomCameraHelper {
     /**
      * 获取输出文件
      * @param type 照片 或者视频
-     * @return
+     * @return 输出文件
      */
     private File getOutputMediaFile(ECameraType type) {
         String dirPath;
@@ -378,7 +360,7 @@ public class CustomCameraHelper {
 
     /**
      * 获取CoustomCameraHelper实例
-     * @return
+     * @return 辅助类实例
      */
     public static CustomCameraHelper getInstance(){
         return instance;
