@@ -2,6 +2,7 @@ package anthony.camerademo.coustom;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
@@ -15,15 +16,15 @@ import android.widget.Toast;
 import anthony.camerademo.R;
 import anthony.cameralibrary.CameraSurfaceView;
 import anthony.cameralibrary.CustomCameraHelper;
-import anthony.cameralibrary.constan.ECameraType;
+import anthony.cameralibrary.constant.ECameraType;
 import anthony.cameralibrary.iml.ICameraListenner;
 
 /**
- * 主要功能:
+ * 主要功能:演示视频拍摄功能
  * Created by wz on 2017/11/21
  * 修订历史:
  */
-public class VideoActivity extends Activity implements View.OnClickListener{
+public class VideoActivity extends Activity implements View.OnClickListener,ICameraListenner{
     private CameraSurfaceView mPreview;
     private Context mContext;
     private ImageView iv_preview;
@@ -47,17 +48,26 @@ public class VideoActivity extends Activity implements View.OnClickListener{
         findViewById(R.id.iv_cancle).setOnClickListener(this);
         findViewById(R.id.start_record).setOnClickListener(this);
         findViewById(R.id.bt_setting).setOnClickListener(this);
-
+        iv_preview.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if(CustomCameraHelper.getInstance().getOutputMediaFileUri()!=null){
+                    Intent showIntent=new Intent(VideoActivity.this,ShowActivity.class);
+                    showIntent.setDataAndType(CustomCameraHelper.getInstance().getOutputMediaFileUri(),"vid");
+                    startActivity(showIntent);
+                }
+            }
+        });
     }
 
     private void initCamera() {
         Log.e("相机", "............initCamera");
-        mPreview = new CameraSurfaceView.Builder(mContext, new ICameraListenner() {
-            @Override
-            public void error(String msg) {
-                Toast.makeText(mContext, msg, Toast.LENGTH_SHORT);
-            }
-        }).setCameraType(ECameraType.CAMERA_VIDEO).setPreviewImageView(iv_preview).setOutPutDirPath("video").startCamera();
+        mPreview = new CameraSurfaceView.Builder(mContext, this)
+                .setCameraType(ECameraType.CAMERA_VIDEO)
+                .setLoadSettingParams(true)
+                .setPreviewImageView(iv_preview)
+                .setOutPutDirName("video")
+                .startCamera();
         if (mPreview.getParent() != null)
             ((ViewGroup) mPreview.getParent()).removeAllViews();
         preview.addView(mPreview);
@@ -116,11 +126,15 @@ public class VideoActivity extends Activity implements View.OnClickListener{
                 }else{
                     getFragmentManager().popBackStack();
                 }
-//                startActivity(new Intent(VideoActivity.this,SettingsFragment.class));
                 break;
             case R.id.iv_cancle://返回
                 finish();
                 break;
         }
+    }
+
+    @Override
+    public void error(String msg) {
+        Toast.makeText(mContext, msg, Toast.LENGTH_SHORT);
     }
 }

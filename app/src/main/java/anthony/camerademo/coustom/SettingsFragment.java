@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import anthony.camerademo.R;
-import anthony.cameralibrary.constan.Constants;
+import anthony.cameralibrary.constant.Constants;
 
 
 /**

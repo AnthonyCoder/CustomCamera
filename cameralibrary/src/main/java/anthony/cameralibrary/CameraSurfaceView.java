@@ -1,14 +1,18 @@
 package anthony.cameralibrary;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.Context;
 import android.util.AttributeSet;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.widget.ImageView;
 
-import anthony.cameralibrary.constan.ECameraType;
+import com.orhanobut.logger.AndroidLogAdapter;
+import com.orhanobut.logger.FormatStrategy;
+import com.orhanobut.logger.Logger;
+import com.orhanobut.logger.PrettyFormatStrategy;
+
+import anthony.cameralibrary.constant.ECameraType;
 import anthony.cameralibrary.iml.ICameraListenner;
 
 /**
@@ -50,6 +54,13 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
     public static class Builder{
         private CameraController.CameraParams P;
         public Builder(Context context,ICameraListenner iCameraListenner){
+            Logger.addLogAdapter(new AndroidLogAdapter(){
+                @Override
+                public boolean isLoggable(int priority, String tag) {
+                    return true;
+                }
+            });
+
             this.P=new CameraController.CameraParams(context,iCameraListenner);
         }
 
@@ -68,13 +79,18 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
             return this;
         }
 
-        public Builder setOutPutDirPath(String dirPath){//设置输出文件夹
-            P.dirPath=dirPath;
+        public Builder setOutPutDirName(String dirName){//设置输出文件夹
+            P.dirName=dirName;
             return this;
         }
 
-        public Builder setfileName(String fileName){//设置输出文件名
+        public Builder setFileName(String fileName){//设置输出文件名
             P.fileName=fileName;
+            return this;
+        }
+
+        public Builder setLoadSettingParams(boolean isload){//设置是否加载本地参数
+            P.loadSettingParams=isload;
             return this;
         }
 
