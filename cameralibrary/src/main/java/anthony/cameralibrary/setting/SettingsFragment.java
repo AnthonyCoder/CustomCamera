@@ -21,7 +21,7 @@ import anthony.cameralibrary.constant.Constants;
  * 修订历史:
  */
 public class SettingsFragment extends PreferenceFragment implements SharedPreferences.OnSharedPreferenceChangeListener {
-   private static Camera mCamera;
+    private static Camera mCamera;
     private static Camera.Parameters mParameters;
 
     public void onCreate(Bundle savedInstanceState) {
