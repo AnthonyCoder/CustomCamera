@@ -43,35 +43,58 @@ dependencies {
 二、Java代码中的使用
 1. 注意该自定义SurfaceView不能直接在layout直接使用，使用时候建议放入一个FrameLayout布局中，可以参考demo实现
 2. 初始化CameraSurfaceView
-![init.png](http://upload-images.jianshu.io/upload_images/2200042-a53da5e8b5bfd5ef.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/540)
-这一步，我们可以配置拍摄的一些参数、保存地址、如果需要预览在某个ImageView上面，还可以设置预览控件等等。。
-需要显示拍摄画面的时候请调用CameraSurfaceView实例对象的 startCamera() 方法。
+
+    ![init.png](http://upload-images.jianshu.io/upload_images/2200042-a53da5e8b5bfd5ef.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/540)
+
+    这一步，我们可以配置拍摄的一些参数、保存地址、如果需要预览在某个ImageView上面，还可以设置预览控件等等。。
+    需要显示拍摄画面的时候请调用CameraSurfaceView实例对象的 startCamera() 方法。
+
 3. SurfaceView绑定Activity/Fragment生命周期
-![bind.png](http://upload-images.jianshu.io/upload_images/2200042-c7c03108941e1eaf.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/540)
+
+    ![bind.png](http://upload-images.jianshu.io/upload_images/2200042-c7c03108941e1eaf.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/540)
+
 4. 拍照/录制的方法
-在需要拍照或者录制的时候调用一下方法：
-CustomCameraHelper.getInstance().startCamera();
-录制这块还有一个停止录制的方法：
-CustomCameraHelper.getInstance().stopRecording();
-当然录制状态这个也需要有一个方法暴露给开发者：
-CustomCameraHelper.getInstance().isRecording()
-所以，使用录制功能，整体可以这样写：
-![video.png](http://upload-images.jianshu.io/upload_images/2200042-70d0d7f989f2ec2a.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/540)
- 使用拍照功能时候直接使用 startCamera() 方法即可拍照
-![pic.png](http://upload-images.jianshu.io/upload_images/2200042-ebb52a5280d0b475.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/540)
+
+    在需要拍照或者录制的时候调用一下方法：
+
+    CustomCameraHelper.getInstance().startCamera();
+
+    录制这块还有一个停止录制的方法：
+
+    CustomCameraHelper.getInstance().stopRecording();
+
+    当然录制状态这个也需要有一个方法暴露给开发者：
+
+    CustomCameraHelper.getInstance().isRecording()
+
+    所以，使用录制功能，整体可以这样写：
+
+    ![video.png](http://upload-images.jianshu.io/upload_images/2200042-70d0d7f989f2ec2a.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/540)
+
+   使用拍照功能时候直接使用 startCamera() 方法即可拍照
+
+    ![pic.png](http://upload-images.jianshu.io/upload_images/2200042-ebb52a5280d0b475.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/540)
 
 5. 可配置项
 我们在使用该库的时候可以自己通过方法配置比如保存地址、拍摄分辨率等等的参数，这个配置属性在源码中的 [CameraController.java](https://github.com/AnthonyCoder/CustomCamera/blob/master/cameralibrary/src/main/java/anthony/cameralibrary/CameraController.java) 文件中
 配置项如下
-setCameraType(ECameraType cameraType) ------>设置拍摄类型（拍照/录制）
-setJpegQuality(int quality)  ------> 设置拍摄照片质量
-setOutPutFilePath(String path) -----> 设置输出路径(完整路径)
-setOutPutDirName(String dirName) -----> 设置输出到指定文件夹内
-setFileName(String fileName) -----> 设置输出文件名
-setLoadSettingParams(boolean isload) ----> 设置是否加载本地参数(读取使用SP存储到本地的参数，SP存储对应的key具体的值定义在 [Constants.java](https://github.com/AnthonyCoder/CustomCamera/blob/master/cameralibrary/src/main/java/anthony/cameralibrary/constant/Constants.java) 中)
-setPreviewImageView(ImageView ivPreview)
-setPreviewImageView(int previewImgRes)
------> 设置画面预览的ImageView（视频预览默认是显示第一帧的画面预览）
+
+    setCameraType(ECameraType cameraType) ------>设置拍摄类型（拍照/录制）
+
+    setJpegQuality(int quality)  ------> 设置拍摄照片质量
+
+    setOutPutFilePath(String path) -----> 设置输出路径(完整路径)
+
+    setOutPutDirName(String dirName) -----> 设置输出到指定文件夹内
+
+    setFileName(String fileName) -----> 设置输出文件名
+
+    setLoadSettingParams(boolean isload) ----> 设置是否加载本地参数(读取使用SP存储到本地的参数，SP存储对应的key具体的值定义在 [Constants.java](https://github.com/AnthonyCoder/CustomCamera/blob/master/cameralibrary/src/main/java/anthony/cameralibrary/constant/Constants.java) 中)
+
+    setPreviewImageView(ImageView ivPreview)
+
+    setPreviewImageView(int previewImgRes)
+    -----> 设置画面预览的ImageView（视频预览默认是显示第一帧的画面预览）
 
 
 
