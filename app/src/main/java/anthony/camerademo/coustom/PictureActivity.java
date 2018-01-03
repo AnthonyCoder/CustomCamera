@@ -28,7 +28,7 @@ public class PictureActivity extends Activity implements View.OnClickListener,IC
     private Context mContext;
     private ImageView iv_preview;
 
-    private FrameLayout preview;
+    private FrameLayout frameLayout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,7 +41,7 @@ public class PictureActivity extends Activity implements View.OnClickListener,IC
     }
 
     private void initView() {
-        preview = (FrameLayout) findViewById(R.id.surface_view);
+        frameLayout = (FrameLayout) findViewById(R.id.surface_view);
         iv_preview = findViewById(R.id.iv_preview);
         iv_preview.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -68,7 +68,7 @@ public class PictureActivity extends Activity implements View.OnClickListener,IC
                 .startCamera();
         if (mPreview.getParent() != null)
             ((ViewGroup) mPreview.getParent()).removeAllViews();
-        preview.addView(mPreview);
+        frameLayout.addView(mPreview);
     }
 
     /**
@@ -78,23 +78,14 @@ public class PictureActivity extends Activity implements View.OnClickListener,IC
      */
     @Override
     public void onPause() {
-        CustomCameraHelper.getInstance().destroyed();
-        if (mPreview != null) {
-            mPreview.setVisibility(View.INVISIBLE);
-        }
+        CustomCameraHelper.getInstance().onPause();
         super.onPause();
     }
 
 
     @Override
     public void onResume() {
-        Log.e("相机", ".........Activity...onResume");
-        if (mPreview != null) {
-            if (mPreview.getVisibility() == View.INVISIBLE) {
-                initCamera();
-                mPreview.setVisibility(View.VISIBLE);
-            }
-        }
+        CustomCameraHelper.getInstance().onResume();
         super.onResume();
     }
 
@@ -117,6 +108,6 @@ public class PictureActivity extends Activity implements View.OnClickListener,IC
 
     @Override
     public void error(String msg) {
-        Toast.makeText(mContext, msg, Toast.LENGTH_SHORT);
+        ToastUtils.showShortToast(mContext,msg);
     }
 }

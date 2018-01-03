@@ -18,6 +18,8 @@ import anthony.cameralibrary.CameraSurfaceView;
 import anthony.cameralibrary.CustomCameraHelper;
 import anthony.cameralibrary.constant.ECameraType;
 import anthony.cameralibrary.iml.ICameraListenner;
+import anthony.cameralibrary.setting.SettingsFragment;
+import anthony.cameralibrary.util.LogUtils;
 
 /**
  * 主要功能:演示视频拍摄功能
@@ -78,29 +80,17 @@ public class VideoActivity extends Activity implements View.OnClickListener,ICam
         SettingsFragment.init(PreferenceManager.getDefaultSharedPreferences(this));
     }
 
-    /**
-     * 锁屏时候这个方法也会被调用
-     * 记住要手动设置surfaceView的可见性
-     * 不然SurfaceView中surfaceholder.callback的所有方法都不会执行
-     */
+
     @Override
     public void onPause() {
-        CustomCameraHelper.getInstance().destroyed();
-        if (mPreview != null) {
-            mPreview.setVisibility(View.INVISIBLE);
-        }
+        CustomCameraHelper.getInstance().onPause();
         super.onPause();
     }
 
 
     @Override
     public void onResume() {
-        if (mPreview != null) {
-            if (mPreview.getVisibility() == View.INVISIBLE) {
-                initCamera();
-                mPreview.setVisibility(View.VISIBLE);
-            }
-        }
+        CustomCameraHelper.getInstance().onResume();
         super.onResume();
     }
 
@@ -132,6 +122,7 @@ public class VideoActivity extends Activity implements View.OnClickListener,ICam
 
     @Override
     public void error(String msg) {
-        Toast.makeText(mContext, msg, Toast.LENGTH_SHORT);
+        LogUtils.d(msg);
+        ToastUtils.showShortToast(mContext,msg);
     }
 }

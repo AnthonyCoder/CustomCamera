@@ -43,7 +43,7 @@ public class CameraSurfaceView extends SurfaceView implements SurfaceHolder.Call
 
     @Override
     public void surfaceDestroyed(SurfaceHolder surfaceHolder) {
-        CustomCameraHelper.getInstance().destroyed();
+        CustomCameraHelper.getInstance().onDestroy();
 
     }
     public static class Builder{

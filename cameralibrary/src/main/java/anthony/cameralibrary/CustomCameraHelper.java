@@ -9,12 +9,15 @@ import android.media.CamcorderProfile;
 import android.media.MediaRecorder;
 import android.media.ThumbnailUtils;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.provider.MediaStore;
+import android.support.annotation.Nullable;
 import android.util.Log;
 import android.view.Display;
 import android.view.Surface;
+import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 
@@ -30,6 +33,7 @@ import anthony.cameralibrary.constant.Constants;
 import anthony.cameralibrary.constant.ECameraType;
 import anthony.cameralibrary.iml.ICameraListenner;
 import anthony.cameralibrary.util.LogUtils;
+import anthony.cameralibrary.util.SizeUtils;
 
 /**
  * 主要功能:辅助类
@@ -104,28 +108,46 @@ public class CustomCameraHelper {
 
     }
 
-    public void destroyed() {
-        LogUtils.d("............destroyed");
+    public void onDestroy() {
+        LogUtils.d("............onDestroy");
+
+        realeseCamera();
+    }
+    private void realeseCamera(){
         if (mCamera == null) {
             return;
         }
         cameraSurfaceView.getHolder().removeCallback(cameraSurfaceView);
         if (mCamera != null) {
-            mCamera.setPreviewCallback(null);
-            mCamera.cancelAutoFocus();
-            mCamera.stopPreview();
             try {
+                mCamera.setPreviewCallback(null);
+                mCamera.cancelAutoFocus();
+                mCamera.stopPreview();
                 mCamera.setPreviewDisplay(null);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+            }catch (Exception e){
+                iCameraListenner.error("释放相机资源失败");
             }
             mCamera.release();
             mCamera = null;
         }
+    }
+    public void onResume() {
+        LogUtils.d("............destroyed");
+        if(cameraSurfaceView!=null&&cameraSurfaceView.getVisibility()==View.INVISIBLE){
+            cameraSurfaceView.getHolder().addCallback(cameraSurfaceView);
+            cameraSurfaceView.setVisibility(View.VISIBLE);
+        }
 
     }
+    public void onPause() {
+        LogUtils.d("............onPause");
+        if (mCamera == null) {
+            return;
+        }
+        cameraSurfaceView.setVisibility(View.INVISIBLE);
+        realeseCamera();
 
-
+    }
     /**
      * 用于根据手机方向获得相机预览画面旋转的角度
      * 校正拍照的角度
@@ -194,8 +216,8 @@ public class CustomCameraHelper {
         if (getSize() == null) {
             return;
         }
-        LogUtils.d("......................w:" + getSize()[0] + "。。。。。。。h:" + getSize()[1]);
-        parameters.setPictureSize(getSize()[0], getSize()[1]);
+        LogUtils.d("......................w:" + getSize().width + "。。。。。。。h:" + getSize().height);
+        parameters.setPictureSize(getSize().width, getSize().height);
         mCamera.setParameters(parameters);
         mCamera.startPreview();
         mCamera.takePicture(null, null, new Camera.PictureCallback() {
@@ -211,6 +233,7 @@ public class CustomCameraHelper {
                     fos.write(data);
                     fos.close();
                     if (coustomParams.previewImageView != null) {
+                        coustomParams.previewImageView.setImageURI(null);
                         coustomParams.previewImageView.setImageURI(outputMediaFileUri);
                     }
                     camera.startPreview();
@@ -224,50 +247,57 @@ public class CustomCameraHelper {
     }
 
     //获取分辨率
-    private int[] getSize() {
+    @Nullable
+    private Camera.Size getSize() {
         int[] sizeList = new int[2];
         if (coustomParams.loadSettingParams) {//本地加载
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(coustomParams.context);
             if (coustomParams.cameraType == ECameraType.CAMERA_TAKE_PHOTO) {//拍照
                 String prefPicSize = prefs.getString(Constants.KEY_PREF_PIC_SIZE, "");
                 if (prefPicSize == null || prefPicSize.trim().isEmpty()) {//本地没有 就使用默认或者用户定义的分辨率
-                    Camera.Size picize = coustomParams.picSize;
-                    if (picize == null) {
+                    if (coustomParams.picSize == null) {
                         iCameraListenner.error("相机没有可支持的拍照分辨率参数");
                         return null;
                     }
-                    prefPicSize = picize.width + "x" + picize.height;
+                    //检查用户参数是否合法 不合法则默认适应屏幕分辨率
+                    if(!SizeUtils.isSurpportDrivse(parameters.getSupportedVideoSizes(),coustomParams.picSize.width,coustomParams.picSize.height)){
+                        coustomParams.picSize = SizeUtils.getAjustSizeFromScreen(parameters.getSupportedPictureSizes(),context);
+                    }
                 }
-                String[] split = prefPicSize.split("x");
-                sizeList[0] = Integer.parseInt(split[0].trim());
-                sizeList[1] = Integer.parseInt(split[1].trim());
-                return sizeList;
+                return coustomParams.picSize;
             } else if (coustomParams.cameraType == ECameraType.CAMERA_VIDEO) {//拍视频
                 String prefVideoSize = prefs.getString(Constants.KEY_PREF_VIDEO_SIZE, "");
                 if (prefVideoSize == null || prefVideoSize.trim().isEmpty()) {
-                    Camera.Size videoSize = coustomParams.vidSize;
-                    if (videoSize == null) {
+                    if (coustomParams.vidSize == null) {
                         iCameraListenner.error("相机没有可支持的视频分辨率参数");
                         return null;
                     }
-                    prefVideoSize = videoSize.width + "x" + videoSize.height;
+                    if(!SizeUtils.isSurpportDrivse(parameters.getSupportedVideoSizes(),coustomParams.vidSize.width,coustomParams.vidSize.height)){
+                        coustomParams.vidSize = SizeUtils.getAjustSizeFromScreen(parameters.getSupportedVideoSizes(),context);
+                    }
+
+                }else{
+                    try {
+                        String[] s = prefVideoSize.split("x");
+                        coustomParams.vidSize.width=Integer.parseInt(s[0].trim());
+                        coustomParams.vidSize.height=Integer.parseInt(s[1].trim());
+                    }catch (Exception e){
+                        coustomParams.vidSize = SizeUtils.getAjustSizeFromScreen(parameters.getSupportedVideoSizes(),context);
+                    }
+                    if(!SizeUtils.isSurpportDrivse(parameters.getSupportedVideoSizes(),coustomParams.vidSize.width,coustomParams.vidSize.height)){
+                        coustomParams.vidSize = SizeUtils.getAjustSizeFromScreen(parameters.getSupportedVideoSizes(),context);
+                    }
                 }
-                String[] split = prefVideoSize.split("x");
-                sizeList[0] = Integer.parseInt(split[0].trim());
-                sizeList[1] = Integer.parseInt(split[1].trim());
-                return sizeList;
+
+                return coustomParams.vidSize;
             }
             return null;
 
         } else {//加载用户配置参数
             if (coustomParams.cameraType == ECameraType.CAMERA_TAKE_PHOTO) {//拍照
-                sizeList[0] = coustomParams.picSize.width;
-                sizeList[1] = coustomParams.picSize.height;
-                return sizeList;
+                return coustomParams.picSize;
             } else if (coustomParams.cameraType == ECameraType.CAMERA_VIDEO) {//视频
-                sizeList[0] = coustomParams.vidSize.width;
-                sizeList[1] = coustomParams.vidSize.height;
-                return sizeList;
+                return coustomParams.vidSize;
             }
             return null;
         }
@@ -280,7 +310,12 @@ public class CustomCameraHelper {
      */
     private boolean startRecording() {
         if (prepareVideoRecorder()) {
-            mMediaRecorder.start();
+//            try{
+                mMediaRecorder.start();
+//            }catch (Exception e){
+//                iCameraListenner.error("启动相机失败"+e.getMessage());
+//                return false;
+//            }
             return true;
         } else {
             releaseMediaRecorder();
@@ -317,7 +352,7 @@ public class CustomCameraHelper {
     private boolean prepareVideoRecorder() {
         mCamera = getCameraInstance();
         mMediaRecorder = new MediaRecorder();
-
+        mCamera.stopPreview();
         mCamera.unlock();
         mMediaRecorder.setCamera(mCamera);
         try {
@@ -325,14 +360,15 @@ public class CustomCameraHelper {
             mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
         } catch (Exception e) {
             iCameraListenner.error("请检查视频录制权限是否打开");
+            return false;
         }
         if (getSize() == null) {
             return false;
         }
         mMediaRecorder.setProfile(CamcorderProfile.get(CamcorderProfile.QUALITY_HIGH));
 
-        Log.e("相机", "......................w:" + getSize()[0] + "。。。。。。。h:" + getSize()[1]);
-        mMediaRecorder.setVideoSize(getSize()[0], getSize()[1]);
+        Log.e("相机", "......................w:" + getSize().width + "。。。。。。。h:" + getSize().height);
+        mMediaRecorder.setVideoSize(getSize().width, getSize().height);
 
         mMediaRecorder.setOutputFile(getOutputMediaFile(ECameraType.CAMERA_VIDEO).toString());
 
