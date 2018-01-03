@@ -1,6 +1,7 @@
 ###  效果（gif有点卡）
 <!-- ![预览](https://github.com/AnthonyCoder/CustomCamera/blob/master/gif/demo.gif) -->
 <div align=center><img width="auto" height="480" src="https://github.com/AnthonyCoder/CustomCamera/blob/master/gif/demo.gif"/></div>
+
 [点击下载预览apk](https://www.pgyer.com/CameraDemo)
 
 ### 基于原生Camera库cameralibrary支持的功能：
