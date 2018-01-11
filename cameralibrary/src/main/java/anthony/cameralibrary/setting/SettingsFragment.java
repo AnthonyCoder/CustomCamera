@@ -12,7 +12,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import anthony.cameralibrary.R;
-import anthony.cameralibrary.constant.Constants;
+import anthony.cameralibrary.constant.SPConstants;
+import anthony.cameralibrary.util.SPConfigUtil;
 
 
 /**
@@ -45,14 +46,19 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
     }
 
     public static void setDefault(SharedPreferences sharedPrefs) {
-        String valPreviewSize = sharedPrefs.getString(Constants.KEY_PREF_PREV_SIZE, null);
+        String valPreviewSize = SPConfigUtil.load(SPConstants.KEY_PREF_PREV_SIZE, null);
         if (valPreviewSize == null&&mParameters!=null) {
-            SharedPreferences.Editor editor = sharedPrefs.edit();
-            editor.putString(Constants.KEY_PREF_PREV_SIZE, getDefaultPreviewSize());
-            editor.putString(Constants.KEY_PREF_PIC_SIZE, getDefaultPictureSize());
-            editor.putString(Constants.KEY_PREF_VIDEO_SIZE, getDefaultVideoSize());
-            editor.putString(Constants.KEY_PREF_FOCUS_MODE, getDefaultFocusMode());
-            editor.apply();
+//            SharedPreferences.Editor editor = sharedPrefs.edit();
+            SPConfigUtil.save(SPConstants.KEY_PREF_PREV_SIZE, getDefaultPreviewSize());
+            SPConfigUtil.save(SPConstants.KEY_PREF_PIC_SIZE, getDefaultPictureSize());
+            SPConfigUtil.save(SPConstants.KEY_PREF_VIDEO_SIZE, getDefaultVideoSize());
+            SPConfigUtil.save(SPConstants.KEY_PREF_FOCUS_MODE, getDefaultFocusMode());
+
+//            editor.putString(SPConstants.KEY_PREF_PREV_SIZE, getDefaultPreviewSize());
+//            editor.putString(SPConstants.KEY_PREF_PIC_SIZE, getDefaultPictureSize());
+//            editor.putString(SPConstants.KEY_PREF_VIDEO_SIZE, getDefaultVideoSize());
+//            editor.putString(SPConstants.KEY_PREF_FOCUS_MODE, getDefaultFocusMode());
+//            editor.apply();
         }
     }
 
@@ -83,46 +89,46 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
         if(mParameters==null){
             return;
         }
-        setPreviewSize(sharedPref.getString(Constants.KEY_PREF_PREV_SIZE, ""));
-        setPictureSize(sharedPref.getString(Constants.KEY_PREF_PIC_SIZE, ""));
-        setFlashMode(sharedPref.getString(Constants.KEY_PREF_FLASH_MODE, ""));
-        setFocusMode(sharedPref.getString(Constants.KEY_PREF_FOCUS_MODE, ""));
-        setWhiteBalance(sharedPref.getString(Constants.KEY_PREF_WHITE_BALANCE, ""));
-        setSceneMode(sharedPref.getString(Constants.KEY_PREF_SCENE_MODE, ""));
-        setExposComp(sharedPref.getString(Constants.KEY_PREF_EXPOS_COMP, ""));
-        setJpegQuality(sharedPref.getString(Constants.KEY_PREF_JPEG_QUALITY, ""));
-        setGpsData(sharedPref.getBoolean(Constants.KEY_PREF_GPS_DATA, false));
+        setPreviewSize(SPConfigUtil.load(SPConstants.KEY_PREF_PREV_SIZE));
+        setPictureSize(SPConfigUtil.load(SPConstants.KEY_PREF_PIC_SIZE));
+        setFlashMode(SPConfigUtil.load(SPConstants.KEY_PREF_FLASH_MODE));
+        setFocusMode(SPConfigUtil.load(SPConstants.KEY_PREF_FOCUS_MODE));
+        setWhiteBalance(SPConfigUtil.load(SPConstants.KEY_PREF_WHITE_BALANCE));
+        setSceneMode(SPConfigUtil.load(SPConstants.KEY_PREF_SCENE_MODE));
+        setExposComp(SPConfigUtil.load(SPConstants.KEY_PREF_EXPOS_COMP));
+        setJpegQuality(SPConfigUtil.load(SPConstants.KEY_PREF_JPEG_QUALITY));
+        setGpsData(SPConfigUtil.loadBoolean(SPConstants.KEY_PREF_GPS_DATA, false));
         mCamera.stopPreview();
         mCamera.setParameters(mParameters);
         mCamera.startPreview();
     }
 
     private void loadSupportedPreviewSize() {
-        cameraSizeListToListPreference(mParameters.getSupportedPreviewSizes(), Constants.KEY_PREF_PREV_SIZE);
+        cameraSizeListToListPreference(mParameters.getSupportedPreviewSizes(), SPConstants.KEY_PREF_PREV_SIZE);
     }
 
     private void loadSupportedPictureSize() {
-        cameraSizeListToListPreference(mParameters.getSupportedPictureSizes(), Constants.KEY_PREF_PIC_SIZE);
+        cameraSizeListToListPreference(mParameters.getSupportedPictureSizes(), SPConstants.KEY_PREF_PIC_SIZE);
     }
 
     private void loadSupportedVideoeSize() {
-        cameraSizeListToListPreference(mParameters.getSupportedVideoSizes(), Constants.KEY_PREF_VIDEO_SIZE);
+        cameraSizeListToListPreference(mParameters.getSupportedVideoSizes(), SPConstants.KEY_PREF_VIDEO_SIZE);
     }
 
     private void loadSupportedFlashMode() {
-        stringListToListPreference(mParameters.getSupportedFlashModes(), Constants.KEY_PREF_FLASH_MODE);
+        stringListToListPreference(mParameters.getSupportedFlashModes(), SPConstants.KEY_PREF_FLASH_MODE);
     }
 
     private void loadSupportedFocusMode() {
-        stringListToListPreference(mParameters.getSupportedFocusModes(), Constants.KEY_PREF_FOCUS_MODE);
+        stringListToListPreference(mParameters.getSupportedFocusModes(), SPConstants.KEY_PREF_FOCUS_MODE);
     }
 
     private void loadSupportedWhiteBalance() {
-        stringListToListPreference(mParameters.getSupportedWhiteBalance(), Constants.KEY_PREF_WHITE_BALANCE);
+        stringListToListPreference(mParameters.getSupportedWhiteBalance(), SPConstants.KEY_PREF_WHITE_BALANCE);
     }
 
     private void loadSupportedSceneMode() {
-        stringListToListPreference(mParameters.getSupportedSceneModes(), Constants.KEY_PREF_SCENE_MODE);
+        stringListToListPreference(mParameters.getSupportedSceneModes(), SPConstants.KEY_PREF_SCENE_MODE);
     }
 
     private void loadSupportedExposeCompensation() {
@@ -132,7 +138,7 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
         for (int value = minExposComp; value <= maxExposComp; value++) {
             exposComp.add(Integer.toString(value));
         }
-        stringListToListPreference(exposComp, Constants.KEY_PREF_EXPOS_COMP);
+        stringListToListPreference(exposComp, SPConstants.KEY_PREF_EXPOS_COMP);
     }
 
     private void cameraSizeListToListPreference(List<Camera.Size> list, String key) {
@@ -154,32 +160,32 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
         updatePrefSummary(findPreference(key));
         switch (key) {
-            case Constants.KEY_PREF_PREV_SIZE:
-                setPreviewSize(sharedPreferences.getString(key, ""));
+            case SPConstants.KEY_PREF_PREV_SIZE:
+                setPreviewSize(SPConfigUtil.load(key, ""));
                 break;
-            case Constants.KEY_PREF_PIC_SIZE:
-                setPictureSize(sharedPreferences.getString(key, ""));
+            case SPConstants.KEY_PREF_PIC_SIZE:
+                setPictureSize(SPConfigUtil.load(key, ""));
                 break;
-            case Constants.KEY_PREF_FOCUS_MODE:
-                setFocusMode(sharedPreferences.getString(key, ""));
+            case SPConstants.KEY_PREF_FOCUS_MODE:
+                setFocusMode(SPConfigUtil.load(key, ""));
                 break;
-            case Constants.KEY_PREF_FLASH_MODE:
-                setFlashMode(sharedPreferences.getString(key, ""));
+            case SPConstants.KEY_PREF_FLASH_MODE:
+                setFlashMode(SPConfigUtil.load(key, ""));
                 break;
-            case Constants.KEY_PREF_WHITE_BALANCE:
-                setWhiteBalance(sharedPreferences.getString(key, ""));
+            case SPConstants.KEY_PREF_WHITE_BALANCE:
+                setWhiteBalance(SPConfigUtil.load(key, ""));
                 break;
-            case Constants.KEY_PREF_SCENE_MODE:
-                setSceneMode(sharedPreferences.getString(key, ""));
+            case SPConstants.KEY_PREF_SCENE_MODE:
+                setSceneMode(SPConfigUtil.load(key, ""));
                 break;
-            case Constants.KEY_PREF_EXPOS_COMP:
-                setExposComp(sharedPreferences.getString(key, ""));
+            case SPConstants.KEY_PREF_EXPOS_COMP:
+                setExposComp(SPConfigUtil.load(key, ""));
                 break;
-            case Constants.KEY_PREF_JPEG_QUALITY:
-                setJpegQuality(sharedPreferences.getString(key, ""));
+            case SPConstants.KEY_PREF_JPEG_QUALITY:
+                setJpegQuality(SPConfigUtil.load(key, ""));
                 break;
-            case Constants.KEY_PREF_GPS_DATA:
-                setGpsData(sharedPreferences.getBoolean(key, false));
+            case SPConstants.KEY_PREF_GPS_DATA:
+                setGpsData(SPConfigUtil.loadBoolean(key, false));
                 break;
         }
         mCamera.stopPreview();

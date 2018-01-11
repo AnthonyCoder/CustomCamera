@@ -5,15 +5,15 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
-import android.widget.Toast;
 
 import anthony.camerademo.R;
-import anthony.cameralibrary.CameraSurfaceView;
+import anthony.cameralibrary.CameraManager;
+import anthony.cameralibrary.widget.CameraLayout;
+import anthony.cameralibrary.widget.CameraSurfaceView;
 import anthony.cameralibrary.CustomCameraHelper;
 import anthony.cameralibrary.constant.ECameraType;
 import anthony.cameralibrary.iml.ICameraListenner;
@@ -24,7 +24,7 @@ import anthony.cameralibrary.iml.ICameraListenner;
  * 修订历史:
  */
 public class PictureActivity extends Activity implements View.OnClickListener,ICameraListenner {
-    private CameraSurfaceView mPreview;
+    private CameraLayout cameraLayout;
     private Context mContext;
     private ImageView iv_preview;
 
@@ -60,15 +60,15 @@ public class PictureActivity extends Activity implements View.OnClickListener,IC
     }
 
     private void initCamera() {
-        mPreview = new CameraSurfaceView.Builder(mContext, this)
+        cameraLayout = new CameraLayout.Builder(mContext, this)
                 .setCameraType(ECameraType.CAMERA_TAKE_PHOTO)
                 .setLoadSettingParams(true)
                 .setPreviewImageView(iv_preview).setOutPutDirName("images")
                 .setFileName("test.jpg")
                 .startCamera();
-        if (mPreview.getParent() != null)
-            ((ViewGroup) mPreview.getParent()).removeAllViews();
-        frameLayout.addView(mPreview);
+        if (cameraLayout.getParent() != null)
+            ((ViewGroup) cameraLayout.getParent()).removeAllViews();
+        frameLayout.addView(cameraLayout);
     }
 
     /**
@@ -109,5 +109,15 @@ public class PictureActivity extends Activity implements View.OnClickListener,IC
     @Override
     public void error(String msg) {
         ToastUtils.showShortToast(mContext,msg);
+    }
+
+    @Override
+    public void switchCameraDirection(CameraManager.CameraDirection cameraDirection) {
+
+    }
+
+    @Override
+    public void switchLightStatus(CameraManager.FlashLigthStatus flashLigthStatus) {
+
     }
 }

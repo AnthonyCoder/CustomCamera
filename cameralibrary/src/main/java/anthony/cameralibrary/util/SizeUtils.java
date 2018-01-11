@@ -2,6 +2,8 @@ package anthony.cameralibrary.util;
 
 import android.content.Context;
 import android.hardware.Camera;
+import android.util.FloatMath;
+import android.view.MotionEvent;
 
 import java.util.List;
 
@@ -52,6 +54,15 @@ public class SizeUtils {
     private static int absScreen(Camera.Size size,Context context){
         int screenWidth= ScreenUtils.getScreenWidth(context);
         return Math.abs(screenWidth-size.width);
+    }
+    //两手指间距
+    public static float fingerSpacing(MotionEvent event) {
+        if (event == null) {
+            return 0;
+        }
+        float x = event.getX(0) - event.getX(1);
+        float y = event.getY(0) - event.getY(1);
+        return (float) Math.sqrt(x * x + y * y);
     }
 
 }
