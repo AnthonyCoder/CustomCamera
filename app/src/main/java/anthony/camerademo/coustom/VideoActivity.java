@@ -5,16 +5,16 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
-import android.widget.Toast;
 
 import anthony.camerademo.R;
-import anthony.cameralibrary.CameraSurfaceView;
+import anthony.cameralibrary.CameraManager;
+import anthony.cameralibrary.widget.CameraLayout;
+import anthony.cameralibrary.widget.CameraSurfaceView;
 import anthony.cameralibrary.CustomCameraHelper;
 import anthony.cameralibrary.constant.ECameraType;
 import anthony.cameralibrary.iml.ICameraListenner;
@@ -27,7 +27,7 @@ import anthony.cameralibrary.util.LogUtils;
  * 修订历史:
  */
 public class VideoActivity extends Activity implements View.OnClickListener,ICameraListenner{
-    private CameraSurfaceView mPreview;
+    private CameraLayout cameraLayout;
     private Context mContext;
     private ImageView iv_preview;
     private FrameLayout preview;
@@ -63,15 +63,15 @@ public class VideoActivity extends Activity implements View.OnClickListener,ICam
     }
 
     private void initCamera() {
-        mPreview = new CameraSurfaceView.Builder(mContext, this)
+        cameraLayout = new CameraLayout.Builder(mContext, this)
                 .setCameraType(ECameraType.CAMERA_VIDEO)
                 .setLoadSettingParams(true)
                 .setPreviewImageView(iv_preview)
                 .setOutPutDirName("video")
                 .startCamera();
-        if (mPreview.getParent() != null)
-            ((ViewGroup) mPreview.getParent()).removeAllViews();
-        preview.addView(mPreview);
+        if (cameraLayout.getParent() != null)
+            ((ViewGroup) cameraLayout.getParent()).removeAllViews();
+        preview.addView(cameraLayout);
         settingsFragment=new SettingsFragment();
         //初始化相机参数（包括相机的拍摄分辨率、闪光灯模式等...）
         SettingsFragment.passCamera(CustomCameraHelper.getInstance().getCameraInstance());
@@ -124,5 +124,15 @@ public class VideoActivity extends Activity implements View.OnClickListener,ICam
     public void error(String msg) {
         LogUtils.d(msg);
         ToastUtils.showShortToast(mContext,msg);
+    }
+
+    @Override
+    public void switchCameraDirection(CameraManager.CameraDirection cameraDirection) {
+
+    }
+
+    @Override
+    public void switchLightStatus(CameraManager.FlashLigthStatus flashLigthStatus) {
+
     }
 }
