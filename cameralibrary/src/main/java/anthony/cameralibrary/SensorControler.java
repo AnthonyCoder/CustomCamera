@@ -170,7 +170,7 @@ public class SensorControler implements  SensorEventListener {
      */
     public void lockFocus() {
         isFocusing = true;
-        foucsing--;
+        foucsing = 0;
         Log.i(TAG, "lockFocus");
     }
 
@@ -179,7 +179,7 @@ public class SensorControler implements  SensorEventListener {
      */
     public void unlockFocus() {
         isFocusing = false;
-        foucsing++;
+        foucsing = 1;
         Log.i(TAG, "unlockFocus");
     }
 

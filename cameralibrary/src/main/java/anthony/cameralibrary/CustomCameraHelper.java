@@ -1,5 +1,6 @@
 package anthony.cameralibrary;
 
+import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Point;
@@ -33,9 +34,13 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
+import anthony.cameralibrary.constant.ECameraScaleType;
+import anthony.cameralibrary.constant.EFouceMode;
+import anthony.cameralibrary.constant.ESaveDirectionType;
 import anthony.cameralibrary.constant.SPConstants;
 import anthony.cameralibrary.constant.ECameraType;
 import anthony.cameralibrary.iml.ICameraListenner;
+import anthony.cameralibrary.util.BitmapUtils;
 import anthony.cameralibrary.util.LogUtils;
 import anthony.cameralibrary.util.SPConfigUtil;
 import anthony.cameralibrary.util.SizeUtils;
@@ -76,51 +81,102 @@ public class CustomCameraHelper implements View.OnTouchListener {
     private float startDis;
     private int currenZoom = 0;
 
+    private EFouceMode mFouceMode;//对焦模式
+    private ECameraScaleType eCameraScaleType;//比例模式
+    private boolean autoFouce = false;
+    private boolean pointFouce = false;
+
     //绑定SurfaceView
     public void bind(CameraLayout cameraLayout) {
         LogUtils.d("............bind");
         cameraLayout.getHolder().addCallback(cameraLayout);
         this.mCameraLayout = cameraLayout;
+        this.mFocusImageView = mCameraLayout.getFocusImageView();
         this.coustomParams = cameraLayout.getCameraParams();
         this.iCameraListenner = coustomParams.iCameraListenner;
         this.context = coustomParams.context;
         this.mCameraManager = CameraManager.getInstance(context);
         this.cameraDirection = mCameraManager.getCameraDirection();
         this.mSensorControler = SensorControler.getInstance();
-        mSensorControler.setCameraFocusListener(new SensorControler.CameraFocusListener() {
-            @Override
-            public void onFocus() {
-                Point point = new Point(mCameraLayout.getWidth() / 2, mCameraLayout.getHeight() / 2);
+        this.mFouceMode = coustomParams.eFouceMode;
+        this.eCameraScaleType = coustomParams.eCameraScaleType;
+        mCameraManager.initCameraLayout(mCameraLayout);
+        mCameraManager.initScaleType(eCameraScaleType);
+        initFouceModel();
+        if (pointFouce || coustomParams.enableZoom) {//如果打开了指定点对焦或者缩放功能则监听触摸事件
+            mCameraLayout.setOnTouchListener(this);
+        }
 
-                onCameraFocus(point);
+        if (autoFouce) {
+            mSensorControler.setCameraFocusListener(new SensorControler.CameraFocusListener() {
+                @Override
+                public void onFocus() {
+                    Point point = new Point(mCameraLayout.getWidth() / 2, mCameraLayout.getHeight() / 2);
+                    onCameraFocus(point);
+                }
+            });
+        }
+
+    }
+
+    private void initFouceModel() {
+        if (mFouceMode == null) {
+            return;
+        }
+        if (mFouceMode == EFouceMode.AUTOPOINTFOUCEMODEL || mFouceMode == EFouceMode.AUTOFOUCEMODEL) {
+            autoFouce = true;
+            pointFouce = false;
+            if (mFouceMode == EFouceMode.AUTOPOINTFOUCEMODEL) {
+                pointFouce = true;
             }
-        });
+        } else if (mFouceMode == EFouceMode.POINTFOUCEMODEL) {
+            pointFouce = true;
+            autoFouce = false;
+        }
     }
 
     public void create() {
         LogUtils.d("............create");
-        getCameraInstance();
-        if (mCamera == null) {
-            return;
-        }
-        try {
-            mCamera.setPreviewDisplay(mCameraLayout.getHolder());
-            mCamera.startPreview();
-            mCameraManager.setActivityCamera(mCamera);
-        } catch (IOException e) {
-            iCameraListenner.error("Error setting camera preview: " + e.getMessage());
+        if(null == mCamera){
+            setUpCamera(cameraDirection, false);
         }
     }
 
+    public void switchCamera() {
+        cameraDirection = cameraDirection.next();
+        realeseCamera();
+//        mCameraManager.releaseCamera(mCameraLayout);
+
+        setUpCamera(cameraDirection, cameraDirection == CameraManager.CameraDirection.CAMERA_BACK);
+    }
 
 
-    public Camera getCameraInstance() {
-        if (mCamera == null) {
-//            try {
-                mCamera = Camera.open();
+    /**
+     * 设置当前的Camera 并进行参数设置
+     *
+     * @param mCameraId
+     */
+    private void setUpCamera(CameraManager.CameraDirection mCameraId, boolean isSwitchFromFront) {
+        int facing = cameraDirection.ordinal();
+        try {
+            mCamera = mCameraManager.openCameraFacing(facing);
+            mSensorControler.restFoucs();
+        } catch (Exception e) {
+            if (iCameraListenner != null) {
+                iCameraListenner.error("启动相机失败");
+            }
+            e.printStackTrace();
+        }
+        if (mCamera != null) {
+
+            mCameraManager.setActivityCamera(mCamera);
+            mCameraManager.setCameraDirection(cameraDirection);
+            try {
+                mCamera.setPreviewDisplay(mCameraLayout.getHolder());
                 parameters = mCamera.getParameters();
-                if (coustomParams != null && coustomParams.enableZoom) {
-                    coustomParams.maxZoom = (coustomParams.maxZoom > parameters.getMaxZoom() || coustomParams.maxZoom <= 0) ? parameters.getMaxZoom() : coustomParams.maxZoom;
+
+                if(eCameraScaleType == ECameraScaleType.CENTER_AUTO){
+                    mCameraManager.adjustDisplayRatio(parameters);
                 }
                 currenZoom = parameters.getZoom();
                 List<String> focusModes = parameters.getSupportedFocusModes();
@@ -130,33 +186,36 @@ public class CustomCameraHelper implements View.OnTouchListener {
                         break;
                     }
                 }
-//            } catch (Exception e) {
-//                LogUtils.e("");
-//                if(iCameraListenner!=null){
-//                    iCameraListenner.error("请检查应用是否开启相机权限或是否被其他应用占用相机");
-//                }
-//            }
+                try {
+                    mCamera.setParameters(parameters);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+
+                if (cameraDirection == CameraManager.CameraDirection.CAMERA_FRONT) {
+                    mSensorControler.lockFocus();
+                } else {
+                    mSensorControler.unlockFocus();
+                }
+                mCameraManager.initDisplayOrientation(parameters);
+                mCamera.startPreview();
+                if(iCameraListenner!=null){
+                    iCameraListenner.switchCameraDirection(cameraDirection);
+                }
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            if(coustomParams.picSize==null){//如果未设置拍照分辨率，则默认系统的
+                coustomParams.picSize = SizeUtils.getAjustSizeFromScreen(mCamera.getParameters().getSupportedPictureSizes(), context);
+            }
+            if(coustomParams.vidSize==null){//如果未设置视频分辨率，则默认系统的
+                coustomParams.vidSize = SizeUtils.getAjustSizeFromScreen(mCamera.getParameters().getSupportedVideoSizes(), context);
+            }
         }
-        return mCamera;
     }
 
-    public void change() {
-        LogUtils.d("............change");
-        if (mCamera == null) {
-            return;
-        }
-        int rotation = getDisplayOrientation();
-        if (Build.VERSION.SDK_INT >= 14) {
-            mCamera.setDisplayOrientation(rotation);
-        } else if (Build.VERSION.SDK_INT >= 8) {
-            setDisplayOrientation(mCamera, rotation);
-        }
-
-        parameters.setRotation(rotation);
-        mCamera.setParameters(parameters);
-        adjustDisplayRatio(rotation);
-
-    }
 
     //实现的图像的正确显示
     private void setDisplayOrientation(Camera camera, int i) {
@@ -174,7 +233,7 @@ public class CustomCameraHelper implements View.OnTouchListener {
 
     public void onDestroy() {
         LogUtils.d("............onDestroy");
-
+//        mCameraManager.releaseCamera(mCameraLayout);
         realeseCamera();
     }
 
@@ -183,27 +242,26 @@ public class CustomCameraHelper implements View.OnTouchListener {
             return;
         }
         mCameraLayout.getHolder().removeCallback(mCameraLayout);
-        if (mCamera != null) {
-            try {
-                mCamera.setPreviewCallback(null);
-                mCamera.cancelAutoFocus();
-                mCamera.stopPreview();
-                mCamera.setPreviewDisplay(null);
-            } catch (Exception e) {
-                iCameraListenner.error("释放相机资源失败");
-            }
+        try {
+            mCamera.setPreviewCallback(null);
+            mCamera.cancelAutoFocus();
+            mCamera.stopPreview();
+            mCamera.setPreviewDisplay(null);
             mCamera.release();
             mCamera = null;
+        } catch (Exception e) {
+            iCameraListenner.error("释放相机资源失败");
         }
+
     }
 
     public void onResume() {
         LogUtils.d("............destroyed");
         mSensorControler.onStart();
         mCameraLayout.initSoundPool();
-        if (mCameraLayout != null && mCameraLayout.getVisibility() == View.INVISIBLE) {
+        if (mCameraLayout != null && mCameraLayout.getCameraSurfaceView().getVisibility() == View.INVISIBLE) {
             mCameraLayout.getHolder().addCallback(mCameraLayout);
-            mCameraLayout.setVisibility(View.VISIBLE);
+            mCameraLayout.getCameraSurfaceView().setVisibility(View.VISIBLE);
         }
 
     }
@@ -215,72 +273,10 @@ public class CustomCameraHelper implements View.OnTouchListener {
         if (mCamera == null) {
             return;
         }
-        mCameraLayout.setVisibility(View.INVISIBLE);
         realeseCamera();
-
+//        mCameraManager.releaseCamera(mCameraLayout);
     }
 
-    /**
-     * 用于根据手机方向获得相机预览画面旋转的角度
-     * 校正拍照的角度
-     *
-     * @return 返回适应的角度
-     */
-    public int getDisplayOrientation() {
-        android.hardware.Camera.CameraInfo camInfo =
-                new android.hardware.Camera.CameraInfo();
-        android.hardware.Camera.getCameraInfo(Camera.CameraInfo.CAMERA_FACING_BACK, camInfo);
-
-        Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-        int rotation = display.getRotation();
-        int degrees = 0;
-        switch (rotation) {
-            case Surface.ROTATION_0:
-                degrees = 0;
-                break;
-            case Surface.ROTATION_90:
-                degrees = 90;
-                break;
-            case Surface.ROTATION_180:
-                degrees = 180;
-                break;
-            case Surface.ROTATION_270:
-                degrees = 270;
-                break;
-        }
-
-        int result = (camInfo.orientation - degrees + 360) % 360;
-        return result;
-    }
-
-    //自适应预览图片尺寸（防止预览画面变形）
-    private void adjustDisplayRatio(int rotation) {
-        ViewGroup parent = ((ViewGroup) mCameraLayout.getParent());
-        Rect rect = new Rect();
-        parent.getLocalVisibleRect(rect);
-        int width = rect.width();
-        int height = rect.height();
-        Camera.Size previewSize = parameters.getPreviewSize();
-        int previewWidth;
-        int previewHeight;
-        if (rotation == 90 || rotation == 270) {
-            previewWidth = previewSize.height;
-            previewHeight = previewSize.width;
-        } else {
-            previewWidth = previewSize.width;
-            previewHeight = previewSize.height;
-        }
-
-        if (width * previewHeight > height * previewWidth) {
-            final int scaledChildWidth = previewWidth * height / previewHeight;
-            mCameraLayout.layout((width - scaledChildWidth) / 2, 0,
-                    (width + scaledChildWidth) / 2, height);
-        } else {
-            final int scaledChildHeight = previewHeight * width / previewWidth;
-            mCameraLayout.layout(0, (height - scaledChildHeight) / 2,
-                    width, (height + scaledChildHeight) / 2);
-        }
-    }
 
     //开始拍照
     public boolean takePicture() {
@@ -302,19 +298,30 @@ public class CustomCameraHelper implements View.OnTouchListener {
                         iCameraListenner.error("Error creating media file, check storage permissions");
                         return;
                     }
-                    try {
-                        FileOutputStream fos = new FileOutputStream(pictureFile);
-                        fos.write(data);
-                        fos.close();
+                    if(BitmapUtils.saveTakePicFile(data,pictureFile, cameraDirection, coustomParams.eSaveDirectionType)){
                         if (coustomParams.previewImageView != null) {
                             coustomParams.previewImageView.setImageURI(null);
-                            coustomParams.previewImageView.setImageURI(outputMediaFileUri);
+                            coustomParams.previewImageView.setImageURI(Uri.fromFile(pictureFile));
                         }
-                    } catch (FileNotFoundException e) {
-                        iCameraListenner.error("File not found: " + e.getMessage());
-                    } catch (IOException e) {
-                        iCameraListenner.error("Error accessing file: " + e.getMessage());
+                    }else{
+                        iCameraListenner.error("拍照失败" );
                     }
+//                    try {
+//                        FileOutputStream fos = new FileOutputStream(pictureFile);
+//                        fos.write(data);
+//                        fos.close();
+//                        if (coustomParams.previewImageView != null) {
+//                            coustomParams.previewImageView.setImageURI(null);
+//                            coustomParams.previewImageView.setImageURI(Uri.fromFile(pictureFile));
+//                        }
+//                    } catch (FileNotFoundException e) {
+//                        iCameraListenner.error("File not found: " + e.getMessage());
+//                    } catch (IOException e) {
+//                        iCameraListenner.error("Error accessing file: " + e.getMessage());
+//                    } catch (Exception e) {
+//                        iCameraListenner.error("拍照失败,msg:" + e.getMessage());
+//                    }
+
                 }
             });
         } catch (Throwable t) {
@@ -341,56 +348,56 @@ public class CustomCameraHelper implements View.OnTouchListener {
     @Nullable
     private Camera.Size getSize() {
         int[] sizeList = new int[2];
-        if (coustomParams.loadSettingParams) {//本地加载
-            if (coustomParams.cameraType == ECameraType.CAMERA_TAKE_PHOTO) {//拍照
-                String prefPicSize = SPConfigUtil.load(SPConstants.KEY_PREF_PIC_SIZE, "");
-                if (prefPicSize == null || prefPicSize.trim().isEmpty()) {//本地没有 就使用默认或者用户定义的分辨率
-                    if (coustomParams.picSize == null) {
-                        iCameraListenner.error("相机没有可支持的拍照分辨率参数");
-                        return null;
-                    }
-                    //检查用户参数是否合法 不合法则默认适应屏幕分辨率
-                    if (!SizeUtils.isSurpportDrivse(parameters.getSupportedVideoSizes(), coustomParams.picSize.width, coustomParams.picSize.height)) {
-                        coustomParams.picSize = SizeUtils.getAjustSizeFromScreen(parameters.getSupportedPictureSizes(), context);
-                    }
-                }
-                return coustomParams.picSize;
-            } else if (coustomParams.cameraType == ECameraType.CAMERA_VIDEO) {//拍视频
-                String prefVideoSize = SPConfigUtil.load(SPConstants.KEY_PREF_VIDEO_SIZE, "");
-                if (prefVideoSize == null || prefVideoSize.trim().isEmpty()) {
-                    if (coustomParams.vidSize == null) {
-                        iCameraListenner.error("相机没有可支持的视频分辨率参数");
-                        return null;
-                    }
-                    if (!SizeUtils.isSurpportDrivse(parameters.getSupportedVideoSizes(), coustomParams.vidSize.width, coustomParams.vidSize.height)) {
-                        coustomParams.vidSize = SizeUtils.getAjustSizeFromScreen(parameters.getSupportedVideoSizes(), context);
-                    }
-
-                } else {
-                    try {
-                        String[] s = prefVideoSize.split("x");
-                        coustomParams.vidSize.width = Integer.parseInt(s[0].trim());
-                        coustomParams.vidSize.height = Integer.parseInt(s[1].trim());
-                    } catch (Exception e) {
-                        coustomParams.vidSize = SizeUtils.getAjustSizeFromScreen(parameters.getSupportedVideoSizes(), context);
-                    }
-                    if (!SizeUtils.isSurpportDrivse(parameters.getSupportedVideoSizes(), coustomParams.vidSize.width, coustomParams.vidSize.height)) {
-                        coustomParams.vidSize = SizeUtils.getAjustSizeFromScreen(parameters.getSupportedVideoSizes(), context);
-                    }
-                }
-
-                return coustomParams.vidSize;
-            }
-            return null;
-
-        } else {//加载用户配置参数
-            if (coustomParams.cameraType == ECameraType.CAMERA_TAKE_PHOTO) {//拍照
-                return coustomParams.picSize;
-            } else if (coustomParams.cameraType == ECameraType.CAMERA_VIDEO) {//视频
-                return coustomParams.vidSize;
-            }
-            return null;
+//        if (coustomParams.loadSettingParams) {//本地加载
+//            if (coustomParams.cameraType == ECameraType.CAMERA_TAKE_PHOTO) {//拍照
+//                String prefPicSize = SPConfigUtil.load(SPConstants.KEY_PREF_PIC_SIZE, "");
+//                if (prefPicSize == null || prefPicSize.trim().isEmpty()) {//本地没有 就使用默认或者用户定义的分辨率
+//                    if (coustomParams.picSize == null) {
+//                        iCameraListenner.error("相机没有可支持的拍照分辨率参数");
+//                        return null;
+//                    }
+//                    //检查用户参数是否合法 不合法则默认适应屏幕分辨率
+//                    if (!SizeUtils.isSurpportDrivse(parameters.getSupportedVideoSizes(), coustomParams.picSize.width, coustomParams.picSize.height)) {
+//                        coustomParams.picSize = SizeUtils.getAjustSizeFromScreen(parameters.getSupportedPictureSizes(), context);
+//                    }
+//                }
+//                return coustomParams.picSize;
+//            } else if (coustomParams.cameraType == ECameraType.CAMERA_VIDEO) {//拍视频
+//                String prefVideoSize = SPConfigUtil.load(SPConstants.KEY_PREF_VIDEO_SIZE, "");
+//                if (prefVideoSize == null || prefVideoSize.trim().isEmpty()) {
+//                    if (coustomParams.vidSize == null) {
+//                        iCameraListenner.error("相机没有可支持的视频分辨率参数");
+//                        return null;
+//                    }
+//                    if (!SizeUtils.isSurpportDrivse(parameters.getSupportedVideoSizes(), coustomParams.vidSize.width, coustomParams.vidSize.height)) {
+//                        coustomParams.vidSize = SizeUtils.getAjustSizeFromScreen(parameters.getSupportedVideoSizes(), context);
+//                    }
+//
+//                } else {
+//                    try {
+//                        String[] s = prefVideoSize.split("x");
+//                        coustomParams.vidSize.width = Integer.parseInt(s[0].trim());
+//                        coustomParams.vidSize.height = Integer.parseInt(s[1].trim());
+//                    } catch (Exception e) {
+//                        coustomParams.vidSize = SizeUtils.getAjustSizeFromScreen(parameters.getSupportedVideoSizes(), context);
+//                    }
+//                    if (!SizeUtils.isSurpportDrivse(parameters.getSupportedVideoSizes(), coustomParams.vidSize.width, coustomParams.vidSize.height)) {
+//                        coustomParams.vidSize = SizeUtils.getAjustSizeFromScreen(parameters.getSupportedVideoSizes(), context);
+//                    }
+//                }
+//
+//                return coustomParams.vidSize;
+//            }
+//            return null;
+//
+//        } else {//加载用户配置参数
+        if (coustomParams.cameraType == ECameraType.CAMERA_TAKE_PHOTO) {//拍照
+            return coustomParams.picSize;
+        } else if (coustomParams.cameraType == ECameraType.CAMERA_VIDEO) {//视频
+            return coustomParams.vidSize;
         }
+        return null;
+//        }
     }
 
     /**
@@ -440,7 +447,6 @@ public class CustomCameraHelper implements View.OnTouchListener {
 
     //准备视频录制
     private boolean prepareVideoRecorder() {
-        mCamera = getCameraInstance();
         mMediaRecorder = new MediaRecorder();
         mCamera.stopPreview();
         mCamera.unlock();
@@ -464,8 +470,7 @@ public class CustomCameraHelper implements View.OnTouchListener {
 
         mMediaRecorder.setPreviewDisplay(mCameraLayout.getHolder().getSurface());
 
-        int rotation = getDisplayOrientation();
-        mMediaRecorder.setOrientationHint(rotation);
+        mMediaRecorder.setOrientationHint(mCameraManager.getDisplayOrientation());
         try {
             mMediaRecorder.prepare();
         } catch (IllegalStateException e) {
@@ -499,6 +504,7 @@ public class CustomCameraHelper implements View.OnTouchListener {
         if (coustomParams.cameraType != null) {
             if (coustomParams.cameraType == ECameraType.CAMERA_TAKE_PHOTO) {//拍照
                 takePicture();
+                mSensorControler.unlockFocus();
                 return true;
             } else if (coustomParams.cameraType == ECameraType.CAMERA_VIDEO) {//录制视频
                 return startRecording();
@@ -589,7 +595,9 @@ public class CustomCameraHelper implements View.OnTouchListener {
                         //zoom不能超出范围
                         if (zoom > coustomParams.maxZoom) zoom = coustomParams.maxZoom;
                         if (zoom < 0) zoom = 0;
-                        currenZoom = zoom;
+                        if (coustomParams.enableZoom) {
+                            setZoom(zoom);
+                        }
                         //将最后一次的距离设为当前距离
                         startDis = endDis;
                     }
@@ -597,7 +605,7 @@ public class CustomCameraHelper implements View.OnTouchListener {
                 break;
             // 手指离开屏幕
             case MotionEvent.ACTION_UP:
-                if (mode != MODE_ZOOM) {
+                if (mode != MODE_ZOOM && pointFouce) {//不是缩放模式且打开了定点对焦时候对焦
                     //设置聚焦
                     Point point = new Point((int) motionEvent.getX(), (int) motionEvent.getY());
                     onCameraFocus(point);
@@ -607,6 +615,32 @@ public class CustomCameraHelper implements View.OnTouchListener {
                 break;
         }
         return true;
+    }
+
+    //获取最大缩放级别
+    public int getMaxZoom() {
+        if (mCamera == null) {
+            return 0;
+        }
+        return mCamera.getParameters().getMaxZoom();
+    }
+
+    //缩放相机
+    public void setZoom(int zoom) {
+        if (mCamera == null) return;
+        Camera.Parameters parameters;
+        LogUtils.d(".....缩放当前 " + zoom + "  ..最大缩放" + coustomParams.maxZoom);
+        //注意此处为录像模式下的setZoom方式。在Camera.unlock之后，调用getParameters方法会引起android框架底层的异常
+        //stackoverflow上看到的解释是由于多线程同时访问Camera导致的冲突，所以在此使用录像前保存的mParameters。
+        parameters = mCamera.getParameters();
+
+        if (coustomParams != null && coustomParams.enableZoom) {
+            coustomParams.maxZoom = (coustomParams.maxZoom > parameters.getMaxZoom() || coustomParams.maxZoom < 0) ? parameters.getMaxZoom() : coustomParams.maxZoom;
+        }
+        if (!parameters.isZoomSupported()) return;
+        parameters.setZoom(zoom);
+        mCamera.setParameters(parameters);
+        currenZoom = zoom;
     }
 
     //相机对焦  默认不需要延时
@@ -625,7 +659,7 @@ public class CustomCameraHelper implements View.OnTouchListener {
     /**
      * 相机对焦
      *
-     * @param point
+     * @param point     对焦点
      * @param needDelay 是否需要延时
      */
     public void onCameraFocus(final Point point, boolean needDelay) {
@@ -637,11 +671,14 @@ public class CustomCameraHelper implements View.OnTouchListener {
                 if (!mSensorControler.isFocusLocked()) {
                     if (mCameraManager.onPointFocus(point, autoFocusCallback)) {
                         mSensorControler.lockFocus();
-                        if (mFocusImageView != null) {
+                        if (mFocusImageView != null && coustomParams.showFouceImg) {
                             mFocusImageView.startFocus(point);
                         }
-                        //播放对焦音效
-                        mCameraLayout.playSound();
+                        if (coustomParams.openFouceVic) {
+                            //播放对焦音效
+                            mCameraLayout.playSound();
+                        }
+
                     }
                 }
             }
@@ -653,7 +690,7 @@ public class CustomCameraHelper implements View.OnTouchListener {
         @Override
         public void onAutoFocus(boolean success, Camera camera) {
             //聚焦之后根据结果修改图片
-            if(mFocusImageView!=null){
+            if (mFocusImageView != null && coustomParams.showFouceImg) {
                 if (success) {
                     mFocusImageView.onFocusSuccess();
                 } else {

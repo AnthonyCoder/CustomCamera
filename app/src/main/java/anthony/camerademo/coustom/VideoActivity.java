@@ -14,11 +14,9 @@ import android.widget.ImageView;
 import anthony.camerademo.R;
 import anthony.cameralibrary.CameraManager;
 import anthony.cameralibrary.widget.CameraLayout;
-import anthony.cameralibrary.widget.CameraSurfaceView;
 import anthony.cameralibrary.CustomCameraHelper;
 import anthony.cameralibrary.constant.ECameraType;
 import anthony.cameralibrary.iml.ICameraListenner;
-import anthony.cameralibrary.setting.SettingsFragment;
 import anthony.cameralibrary.util.LogUtils;
 
 /**
@@ -32,7 +30,6 @@ public class VideoActivity extends Activity implements View.OnClickListener,ICam
     private ImageView iv_preview;
     private FrameLayout preview;
     private Button start_record;
-    private SettingsFragment settingsFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,19 +62,15 @@ public class VideoActivity extends Activity implements View.OnClickListener,ICam
     private void initCamera() {
         cameraLayout = new CameraLayout.Builder(mContext, this)
                 .setCameraType(ECameraType.CAMERA_VIDEO)
-                .setLoadSettingParams(true)
+                .setShowFouceImg(true)
+                .setOpenFouceVic(true)
+                .setZoomEnable(false,100)
                 .setPreviewImageView(iv_preview)
                 .setOutPutDirName("video")
                 .startCamera();
         if (cameraLayout.getParent() != null)
             ((ViewGroup) cameraLayout.getParent()).removeAllViews();
         preview.addView(cameraLayout);
-        settingsFragment=new SettingsFragment();
-        //初始化相机参数（包括相机的拍摄分辨率、闪光灯模式等...）
-        SettingsFragment.passCamera(CustomCameraHelper.getInstance().getCameraInstance());
-        PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
-        SettingsFragment.setDefault(PreferenceManager.getDefaultSharedPreferences(this));
-        SettingsFragment.init(PreferenceManager.getDefaultSharedPreferences(this));
     }
 
 
@@ -108,11 +101,6 @@ public class VideoActivity extends Activity implements View.OnClickListener,ICam
                 }
                 break;
             case R.id.bt_setting:
-                if(!settingsFragment.isVisible()){
-                    getFragmentManager().beginTransaction().replace(R.id.surface_view, settingsFragment).addToBackStack(null).commit();
-                }else{
-                    getFragmentManager().popBackStack();
-                }
                 break;
             case R.id.iv_cancle://返回
                 finish();

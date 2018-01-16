@@ -1,58 +1,65 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
+    android:orientation="vertical"
     android:layout_height="match_parent">
     <FrameLayout
         android:id="@+id/surface_view"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
-
+        android:layout_height="0dp"
+        android:layout_weight="1"/>
     <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="200dp"
+        android:layout_gravity="bottom"
+        android:paddingLeft="20dp"
+        android:paddingRight="20dp"
+        android:paddingTop="10dp"
+        android:background="#262626">
+        <ImageButton
+            android:id="@+id/ib_exit"
+            android:layout_width="45dp"
+            android:layout_height="45dp"
+            android:background="@null"
+            android:clickable="true"
+            android:src="@drawable/selector_btn_camera_exit" />
+        <TextView
+            android:id="@+id/tv_camera_dir"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="方向：后置摄像头"
+            android:textSize="18sp"
+            android:textColor="#FFFFFF"
+            android:layout_marginTop="10dp"
+            android:layout_centerHorizontal="true"/>
+        <ImageButton
+            android:id="@+id/ib_takephoto"
+            android:layout_width="90dp"
+            android:layout_height="90dp"
+            android:layout_centerInParent="true"
+            android:background="@null"
+            android:src="@drawable/selector_btn_shutter" />
+        <ImageButton
+            android:id="@+id/ib_recentpic"
+            android:layout_width="45dp"
+            android:layout_height="45dp"
+            android:layout_alignParentRight="true"
+            android:background="@drawable/selector_btn_flashlight_auto" />
         <ImageView
             android:id="@+id/iv_preview"
-            android:layout_width="match_parent"
-            android:layout_height="150px"
+            android:layout_width="90dp"
+            android:layout_height="110dp"
+            android:layout_alignParentBottom="true"/>
+        <CheckBox
+            android:id="@+id/ck_switch_dir"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
             android:layout_alignParentBottom="true"
-            android:layout_toLeftOf="@+id/card_img"/>
-        <ImageView
-            android:id="@+id/card_img"
-            android:layout_width="912px"
-            android:layout_height="576px"
-            android:src="@mipmap/bg_photograph_front"
-            android:layout_centerInParent="true"/>
-        <RelativeLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_alignTop="@+id/card_img"
-            android:layout_alignBottom="@id/card_img"
-            android:layout_toRightOf="@+id/card_img"
-            >
-            <ImageView
-                android:id="@+id/iv_cancle"
-                android:layout_width="wrap_content"
-                android:layout_centerHorizontal="true"
-                android:layout_height="wrap_content"
-                android:src="@mipmap/icon_cancel"/>
-
-            <ImageView
-                android:id="@+id/iv_photograph"
-                android:layout_width="wrap_content"
-                android:layout_centerInParent="true"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:src="@mipmap/icon_photograph"/>
-
-            <ImageView
-                android:id="@+id/iv_comfirm"
-                android:layout_width="wrap_content"
-                android:layout_centerHorizontal="true"
-                android:layout_alignParentBottom="true"
-                android:layout_height="wrap_content"
-                android:src="@mipmap/icon_comfirm" />
-
-        </RelativeLayout>
+            android:layout_alignParentRight="true"
+            android:button="@null"
+            android:textColor="#FFFFFF"
+            android:background="@drawable/selector_swith_dir"/>
     </RelativeLayout>
 
-</FrameLayout>
+
+</LinearLayout>
