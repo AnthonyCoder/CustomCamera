@@ -7,11 +7,16 @@ import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import anthony.camerademo.R;
 import anthony.cameralibrary.CameraManager;
+import anthony.cameralibrary.constant.ECameraScaleType;
+import anthony.cameralibrary.constant.EFouceMode;
 import anthony.cameralibrary.widget.CameraLayout;
 import anthony.cameralibrary.widget.CameraSurfaceView;
 import anthony.cameralibrary.CustomCameraHelper;
@@ -27,13 +32,15 @@ public class PictureActivity extends Activity implements View.OnClickListener,IC
     private CameraLayout cameraLayout;
     private Context mContext;
     private ImageView iv_preview;
+    private CheckBox cbSwithDir;
+    private TextView tv_camera_dir;
 
     private FrameLayout frameLayout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);//设置横屏
+//        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);//设置横屏
         setContentView(R.layout.activity_picture);
         mContext = this;
         initView();
@@ -43,26 +50,28 @@ public class PictureActivity extends Activity implements View.OnClickListener,IC
     private void initView() {
         frameLayout = (FrameLayout) findViewById(R.id.surface_view);
         iv_preview = findViewById(R.id.iv_preview);
-        iv_preview.setOnClickListener(new View.OnClickListener() {
+        tv_camera_dir = findViewById(R.id.tv_camera_dir);
+        findViewById(R.id.ib_exit).setOnClickListener(this);
+        findViewById(R.id.ib_takephoto).setOnClickListener(this);
+        iv_preview.setOnClickListener(this);
+        cbSwithDir = findViewById(R.id.ck_switch_dir);
+        cbSwithDir.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
-            public void onClick(View view) {
-                if (CustomCameraHelper.getInstance().getOutputMediaFileUri() != null) {
-                    Intent showIntent = new Intent(PictureActivity.this, ShowActivity.class);
-                    showIntent.setDataAndType(CustomCameraHelper.getInstance().getOutputMediaFileUri(), "pic");
-                    startActivity(showIntent);
-                }
-
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                CustomCameraHelper.getInstance().switchCamera();
+                    tv_camera_dir.setText("方向："+(b?"前":"后")+"置摄像头");
             }
         });
-        findViewById(R.id.iv_cancle).setOnClickListener(this);
-        findViewById(R.id.iv_photograph).setOnClickListener(this);
-        findViewById(R.id.iv_comfirm).setOnClickListener(this);
     }
 
     private void initCamera() {
         cameraLayout = new CameraLayout.Builder(mContext, this)
                 .setCameraType(ECameraType.CAMERA_TAKE_PHOTO)
-                .setLoadSettingParams(true)
+                .setShowFouceImg(true)
+                .setOpenFouceVic(true)
+                .setECameraScaleType(ECameraScaleType.CENTER_AUTO)
+                .setZoomEnable(false,100)
+                .setFouceModel(EFouceMode.AUTOPOINTFOUCEMODEL)
                 .setPreviewImageView(iv_preview).setOutPutDirName("images")
                 .setFileName("test.jpg")
                 .startCamera();
@@ -92,16 +101,20 @@ public class PictureActivity extends Activity implements View.OnClickListener,IC
     @Override
     public void onClick(View view) {
         switch (view.getId()) {
-            case R.id.iv_cancle://返回
+            case R.id.ib_exit://返回
                 finish();
                 break;
 
-            case R.id.iv_photograph://拍照
+            case R.id.ib_takephoto://拍照
                 CustomCameraHelper.getInstance().startCamera();
                 break;
 
-            case R.id.iv_comfirm://提交
-
+            case R.id.iv_preview://预览
+                if (CustomCameraHelper.getInstance().getOutputMediaFileUri() != null) {
+                    Intent showIntent = new Intent(PictureActivity.this, ShowActivity.class);
+                    showIntent.setDataAndType(CustomCameraHelper.getInstance().getOutputMediaFileUri(), "pic");
+                    startActivity(showIntent);
+                }
                 break;
         }
     }

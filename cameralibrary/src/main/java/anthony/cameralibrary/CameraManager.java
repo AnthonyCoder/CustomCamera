@@ -8,17 +8,25 @@ import android.hardware.Camera;
 import android.media.AudioManager;
 import android.media.SoundPool;
 import android.os.Build;
+import android.util.Log;
+import android.view.Display;
+import android.view.Surface;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.WindowManager;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
+import anthony.cameralibrary.constant.ECameraScaleType;
 import anthony.cameralibrary.constant.SPConstants;
 import anthony.cameralibrary.iml.ICameraHelper;
 import anthony.cameralibrary.iml.ICameraListenner;
 import anthony.cameralibrary.iml.IOnFoucusOperation;
 import anthony.cameralibrary.util.LogUtils;
 import anthony.cameralibrary.util.SPConfigUtil;
+import anthony.cameralibrary.widget.CameraLayout;
 
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.GINGERBREAD;
@@ -39,6 +47,8 @@ public class CameraManager implements ICameraHelper,IOnFoucusOperation {
     private CameraDirection mFlashDirection;
     private ICameraListenner iCameraListenner;
     private Camera mActivityCamera;
+    private CameraLayout mCameraLayout;
+    private ECameraScaleType eCameraScaleType;
 
     //屏蔽默认构造方法
     private CameraManager(Context context) {
@@ -65,7 +75,12 @@ public class CameraManager implements ICameraHelper,IOnFoucusOperation {
         }
         return mInstance;
     }
-
+    public void initCameraLayout(CameraLayout cameraLayout){
+        this.mCameraLayout = cameraLayout;
+    }
+    public void initScaleType(ECameraScaleType scaleType){
+        this.eCameraScaleType = scaleType;
+    }
     //绑定监听
     public void bindListenner(ICameraListenner iCameraListenner) {
         this.iCameraListenner = iCameraListenner;
@@ -258,16 +273,158 @@ public class CameraManager implements ICameraHelper,IOnFoucusOperation {
 
     //释放camera
     public void releaseCamera() {
-        if (mActivityCamera != null) {
+        if(mActivityCamera==null){
+            return;
+        }
+        if(mCameraLayout!=null){
+            mCameraLayout.getHolder().removeCallback(mCameraLayout);
+
+            mCameraLayout.getCameraSurfaceView().setVisibility(View.INVISIBLE);
+        }
             try {
-                mActivityCamera.stopPreview();
                 mActivityCamera.setPreviewCallback(null);
-                mActivityCamera.setPreviewCallbackWithBuffer(null);
+                mActivityCamera.cancelAutoFocus();
+                mActivityCamera.stopPreview();
+                mActivityCamera.setPreviewDisplay(null);
+//                mActivityCamera.stopPreview();
+//                mActivityCamera.setPreviewCallback(null);
+//                mActivityCamera.setPreviewDisplay(null);
+//                mActivityCamera.setPreviewCallbackWithBuffer(null);
                 mActivityCamera.release();
                 mActivityCamera = null;
             } catch (Exception e) {
                 e.printStackTrace();
             }
+
+    }
+    public void initDisplayOrientation(Camera.Parameters parameters) {
+        if (mActivityCamera == null) {
+            return;
+        }
+        if (Build.VERSION.SDK_INT >= 14) {
+            mActivityCamera.setDisplayOrientation(getDisplayOrientation());
+        } else if (Build.VERSION.SDK_INT >= 8) {
+            setDisplayOrientation(mActivityCamera, getDisplayOrientation());
+        }
+
+        parameters.setRotation(getDisplayOrientation());
+        mActivityCamera.setParameters(parameters);
+        if(eCameraScaleType == ECameraScaleType.CENTER_AUTO){
+            adjustDisplayRatio(parameters);
+        }
+
+
+    }
+    //实现的图像的正确显示
+    private void setDisplayOrientation(Camera camera, int i) {
+        Method downPolymorphic;
+        try {
+            downPolymorphic = camera.getClass().getMethod("setDisplayOrientation",
+                    new Class[]{int.class});
+            if (downPolymorphic != null) {
+                downPolymorphic.invoke(camera, new Object[]{i});
+            }
+        } catch (Exception e) {
+            Log.e("Came_e", "图像出错");
         }
     }
+    /**
+     * 用于根据手机方向获得相机预览画面旋转的角度
+     * 校正拍照的角度
+     *
+     * @return 返回适应的角度
+     */
+    public int getDisplayOrientation() {
+        android.hardware.Camera.CameraInfo camInfo =
+                new android.hardware.Camera.CameraInfo();
+        android.hardware.Camera.getCameraInfo(mFlashDirection.ordinal(), camInfo);
+
+        Display display = ((WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
+        int rotation = display.getRotation();
+        int degrees = 0;
+        switch (rotation) {
+            case Surface.ROTATION_0:
+                degrees = 0;
+                break;
+            case Surface.ROTATION_90:
+                degrees = 90;
+                break;
+            case Surface.ROTATION_180:
+                degrees = 180;
+                break;
+            case Surface.ROTATION_270:
+                degrees = 270;
+                break;
+        }
+        int result;
+        if (camInfo.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
+            // Orientation is angle of rotation when facing the camera for
+            // the camera image to match the natural orientation of the device
+            int displayOrientation = (camInfo.orientation + degrees) % 360;
+            result = (360 - displayOrientation) % 360;
+        } else {
+            result = (camInfo.orientation - degrees + 360) % 360;
+        }
+        LogUtils.d(".......角度："+degrees +"....处理后："+result);
+        return result;
+    }
+
+    //自适应预览图片尺寸（防止预览画面变形）
+    public void adjustDisplayRatio(Camera.Parameters parameters) {
+        ViewGroup parent = ((ViewGroup) mCameraLayout.getParent());
+        Rect rect = new Rect();
+        parent.getLocalVisibleRect(rect);
+        final int width = rect.width();
+        final int height = rect.height();
+        Camera.Size previewSize = parameters.getPreviewSize();
+        int previewWidth;
+        int previewHeight;
+        if (getDisplayOrientation() == 90 || getDisplayOrientation() == 270) {
+            previewWidth = previewSize.height;
+            previewHeight = previewSize.width;
+        } else {
+            previewWidth = previewSize.width;
+            previewHeight = previewSize.height;
+        }
+        View.OnLayoutChangeListener layoutChangeListener;
+        if (width * previewHeight > height * previewWidth) {
+            final int scaledChildWidth = previewWidth * height / previewHeight;
+            layoutChangeListener = new View.OnLayoutChangeListener() {
+                @Override
+                public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
+                    mCameraLayout.layout((width - scaledChildWidth) / 2, 0,
+                            (width + scaledChildWidth) / 2, height);
+                }
+            };
+
+        } else {
+            final int scaledChildHeight = previewHeight * width / previewWidth;
+            layoutChangeListener = new View.OnLayoutChangeListener() {
+                @Override
+                public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
+                    mCameraLayout.layout(0, (height - scaledChildHeight) / 2,
+                            width, (height + scaledChildHeight) / 2);
+                }
+            };
+        }
+        mCameraLayout.addOnLayoutChangeListener(layoutChangeListener);
+    }
+//    private void realeseCamera() {
+//        if (mCamera == null) {
+//            return;
+//        }
+//        mCameraLayout.getHolder().removeCallback(mCameraLayout);
+//        if (mCamera != null) {
+//            try {
+//                mCamera.setPreviewCallback(null);
+//                mCamera.cancelAutoFocus();
+//                mCamera.stopPreview();
+//                mCamera.setPreviewDisplay(null);
+//            } catch (Exception e) {
+//                iCameraListenner.error("释放相机资源失败");
+//            }
+//            mCamera.release();
+//            mCamera = null;
+//        }
+//    }
 }

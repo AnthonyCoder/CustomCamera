@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <FrameLayout
+        android:id="@+id/surface_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+        <ImageView
+            android:id="@+id/iv_preview"
+            android:layout_width="match_parent"
+            android:layout_height="150px"
+            android:layout_alignParentBottom="true"
+            android:layout_toLeftOf="@+id/card_img"/>
+        <ImageView
+            android:id="@+id/card_img"
+            android:layout_width="912px"
+            android:layout_height="576px"
+            android:src="@mipmap/bg_photograph_front"
+            android:layout_centerInParent="true"/>
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_alignTop="@+id/card_img"
+            android:layout_alignBottom="@id/card_img"
+            android:layout_toRightOf="@+id/card_img"
+            >
+            <ImageView
+                android:id="@+id/iv_cancle"
+                android:layout_width="wrap_content"
+                android:layout_centerHorizontal="true"
+                android:layout_height="wrap_content"
+                android:src="@mipmap/icon_cancel"/>
+
+            <ImageView
+                android:id="@+id/iv_photograph"
+                android:layout_width="wrap_content"
+                android:layout_centerInParent="true"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:src="@mipmap/icon_photograph"/>
+
+            <ImageView
+                android:id="@+id/iv_comfirm"
+                android:layout_width="wrap_content"
+                android:layout_centerHorizontal="true"
+                android:layout_alignParentBottom="true"
+                android:layout_height="wrap_content"
+                android:src="@mipmap/icon_comfirm" />
+
+        </RelativeLayout>
+    </RelativeLayout>
+
+</FrameLayout>

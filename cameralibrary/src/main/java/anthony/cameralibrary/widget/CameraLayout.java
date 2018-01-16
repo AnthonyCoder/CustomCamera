@@ -12,12 +12,13 @@ import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 
-import java.util.zip.Inflater;
-
 import anthony.cameralibrary.CameraController;
 import anthony.cameralibrary.CustomCameraHelper;
 import anthony.cameralibrary.R;
+import anthony.cameralibrary.constant.ECameraScaleType;
 import anthony.cameralibrary.constant.ECameraType;
+import anthony.cameralibrary.constant.EFouceMode;
+import anthony.cameralibrary.constant.ESaveDirectionType;
 import anthony.cameralibrary.iml.ICameraListenner;
 
 /**
@@ -56,14 +57,14 @@ public class CameraLayout extends FrameLayout implements SurfaceHolder.Callback 
 
 
     @Override
-    public void surfaceCreated(SurfaceHolder srfaceHolder) {
+    public void surfaceCreated(SurfaceHolder surfaceHolder) {
         CustomCameraHelper.getInstance().create();
 
     }
 
     @Override
-    public void surfaceChanged(SurfaceHolder surfaceHolder, int i, int i1, int i2) {
-        CustomCameraHelper.getInstance().change();
+    public void surfaceChanged(SurfaceHolder surfaceHolder, int i, int i1, int i2) {//大小发生变化时候
+//        CustomCameraHelper.getInstance().change();
     }
 
     @Override
@@ -106,10 +107,10 @@ public class CameraLayout extends FrameLayout implements SurfaceHolder.Callback 
             return this;
         }
 
-        public Builder setLoadSettingParams(boolean isload) {//设置是否加载本地参数
-            P.loadSettingParams = isload;
-            return this;
-        }
+//        public Builder setLoadSettingParams(boolean isload) {//设置是否加载本地参数
+//            P.loadSettingParams = isload;
+//            return this;
+//        }
 
         public Builder setPreviewImageView(ImageView ivPreview) {
             P.previewImageView = ivPreview;
@@ -123,8 +124,8 @@ public class CameraLayout extends FrameLayout implements SurfaceHolder.Callback 
             return this;
         }
 
-        public Builder setZoomEnable(boolean enable) {//值为0时候表示，使用系统最大缩放
-            return setZoomEnable(enable, 0);
+        public Builder setZoomEnable(boolean enable) {//值为-1时候表示，使用系统最大缩放
+            return setZoomEnable(enable, -1);
         }
 
         public Builder setZoomEnable(boolean enable, int maxZoom) {
@@ -138,8 +139,21 @@ public class CameraLayout extends FrameLayout implements SurfaceHolder.Callback 
             return this;
         }
 
-        public Builder setShowFouceVic(boolean isOpen) {//是否打开聚焦音效
-            P.showFouceVic = isOpen;
+        public Builder setOpenFouceVic(boolean isOpen) {//是否打开聚焦音效
+            P.openFouceVic = isOpen;
+            return this;
+        }
+        public Builder setFouceModel(EFouceMode eFouceMode) {//设置对焦模式
+            P.eFouceMode = eFouceMode;
+            return this;
+        }
+        public Builder setECameraScaleType(ECameraScaleType eCameraScaleType) {//设置比例模式
+            P.eCameraScaleType = eCameraScaleType;
+            return this;
+        }
+
+        public Builder setECameraScaleType(ESaveDirectionType eSaveDirectionType) {//设置成像模式
+            P.eSaveDirectionType = eSaveDirectionType;
             return this;
         }
 
