@@ -163,7 +163,7 @@ public class CameraLayout extends FrameLayout implements SurfaceHolder.Callback 
             return this;
         }
 
-        public CameraLayout startCamera() {
+        public CameraLayout buildCamera() {
             CameraLayout cameraLayout = new CameraLayout(P.context);
             cameraLayout.initParams(P);
             CustomCameraHelper.getInstance().bind(cameraLayout);

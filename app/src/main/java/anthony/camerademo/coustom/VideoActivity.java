@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -13,6 +12,7 @@ import android.widget.ImageView;
 
 import anthony.camerademo.R;
 import anthony.cameralibrary.CameraManager;
+import anthony.cameralibrary.iml.ICameraView;
 import anthony.cameralibrary.widget.CameraLayout;
 import anthony.cameralibrary.CustomCameraHelper;
 import anthony.cameralibrary.constant.ECameraType;
@@ -24,7 +24,7 @@ import anthony.cameralibrary.util.LogUtils;
  * Created by wz on 2017/11/21
  * 修订历史:
  */
-public class VideoActivity extends Activity implements View.OnClickListener,ICameraListenner{
+public class VideoActivity extends Activity implements View.OnClickListener,ICameraListenner,ICameraView{
     private CameraLayout cameraLayout;
     private Context mContext;
     private ImageView iv_preview;
@@ -37,7 +37,7 @@ public class VideoActivity extends Activity implements View.OnClickListener,ICam
         setContentView(R.layout.activity_video);
         mContext = this;
         initView();
-        initCamera();
+        CustomCameraHelper.getInstance().bindView(this);
     }
 
     private void initView() {
@@ -47,32 +47,8 @@ public class VideoActivity extends Activity implements View.OnClickListener,ICam
         findViewById(R.id.iv_cancle).setOnClickListener(this);
         findViewById(R.id.start_record).setOnClickListener(this);
         findViewById(R.id.bt_setting).setOnClickListener(this);
-        iv_preview.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if(CustomCameraHelper.getInstance().getOutputMediaFileUri()!=null){
-                    Intent showIntent=new Intent(VideoActivity.this,ShowActivity.class);
-                    showIntent.setDataAndType(CustomCameraHelper.getInstance().getOutputMediaFileUri(),"vid");
-                    startActivity(showIntent);
-                }
-            }
-        });
+        iv_preview.setOnClickListener(this);
     }
-
-    private void initCamera() {
-        cameraLayout = new CameraLayout.Builder(mContext, this)
-                .setCameraType(ECameraType.CAMERA_VIDEO)
-                .setShowFouceImg(true)
-                .setOpenFouceVic(true)
-                .setZoomEnable(false,100)
-                .setPreviewImageView(iv_preview)
-                .setOutPutDirName("video")
-                .startCamera();
-        if (cameraLayout.getParent() != null)
-            ((ViewGroup) cameraLayout.getParent()).removeAllViews();
-        preview.addView(cameraLayout);
-    }
-
 
     @Override
     public void onPause() {
@@ -95,7 +71,7 @@ public class VideoActivity extends Activity implements View.OnClickListener,ICam
                     CustomCameraHelper.getInstance().stopRecording();
                     start_record.setText("录制");
                 } else {
-                    if (CustomCameraHelper.getInstance().startCamera()) {
+                    if (CustomCameraHelper.getInstance().doPicOrVid()) {
                         start_record.setText("停止");
                     }
                 }
@@ -104,6 +80,13 @@ public class VideoActivity extends Activity implements View.OnClickListener,ICam
                 break;
             case R.id.iv_cancle://返回
                 finish();
+                break;
+            case R.id.iv_preview:
+                if(CustomCameraHelper.getInstance().getOutputMediaFileUri()!=null){
+                    Intent showIntent=new Intent(VideoActivity.this,ShowActivity.class);
+                    showIntent.setDataAndType(CustomCameraHelper.getInstance().getOutputMediaFileUri(),"vid");
+                    startActivity(showIntent);
+                }
                 break;
         }
     }
@@ -122,5 +105,24 @@ public class VideoActivity extends Activity implements View.OnClickListener,ICam
     @Override
     public void switchLightStatus(CameraManager.FlashLigthStatus flashLigthStatus) {
 
+    }
+
+    @Override
+    public ViewGroup cameraRootViewGrop() {
+        return preview;
+    }
+
+    @Override
+    public CameraLayout cameraLayout() {
+
+        cameraLayout = new CameraLayout.Builder(mContext, this)
+                .setCameraType(ECameraType.CAMERA_VIDEO)
+                .setShowFouceImg(true)
+                .setOpenFouceVic(true)
+                .setZoomEnable(false,100)
+                .setPreviewImageView(iv_preview)
+                .setOutPutDirName("video")
+                .buildCamera();
+        return cameraLayout;
     }
 }

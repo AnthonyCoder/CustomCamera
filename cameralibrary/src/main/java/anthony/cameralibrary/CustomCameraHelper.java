@@ -8,6 +8,7 @@ import android.media.CamcorderProfile;
 import android.media.MediaRecorder;
 import android.media.ThumbnailUtils;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
@@ -16,6 +17,7 @@ import android.support.annotation.Nullable;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,6 +29,7 @@ import anthony.cameralibrary.constant.EPreviewScaleType;
 import anthony.cameralibrary.constant.EFouceMode;
 import anthony.cameralibrary.constant.ECameraType;
 import anthony.cameralibrary.iml.ICameraListenner;
+import anthony.cameralibrary.iml.ICameraView;
 import anthony.cameralibrary.util.BitmapUtils;
 import anthony.cameralibrary.util.LogUtils;
 import anthony.cameralibrary.util.SizeUtils;
@@ -70,6 +73,7 @@ public class CustomCameraHelper implements View.OnTouchListener {
     private EPreviewScaleType ePreviewScaleType;//比例模式
     private boolean autoFouce = false;
     private boolean pointFouce = false;
+    private ICameraView iCameraView;//Activity中的相机View和属性保存
 
     //绑定SurfaceView
     public void bind(CameraLayout cameraLayout) {
@@ -127,16 +131,17 @@ public class CustomCameraHelper implements View.OnTouchListener {
             setUpCamera();
         }
     }
+
     //切换相机头
     public void switchCamera() {
         cameraDirection = cameraDirection.next();
         realeseCamera();
 //        mCameraManager.releaseCamera(mCameraLayout);
-
         setUpCamera();
     }
+
     //切换闪光灯
-    public void switchFlashLight(){
+    public void switchFlashLight() {
         mCameraManager.turnLight(mCameraManager.getLightStatus().next());
     }
 
@@ -144,8 +149,7 @@ public class CustomCameraHelper implements View.OnTouchListener {
      * 设置当前的Camera 并进行参数设置
      */
     private void setUpCamera() {
-
-        boolean isSwitchFromFront = cameraDirection == CameraManager.CameraDirection.CAMERA_BACK;
+        boolean isSwitchFromFront = (cameraDirection == CameraManager.CameraDirection.CAMERA_BACK);
         int facing = cameraDirection.ordinal();
         mCameraManager.bindListenner(iCameraListenner);
         try {
@@ -216,14 +220,22 @@ public class CustomCameraHelper implements View.OnTouchListener {
         realeseCamera();
     }
 
-    private void realeseCamera() {
+    public void realeseCamera() {
         if (mCamera == null) {
             return;
         }
-        mCameraLayout.getHolder().removeCallback(mCameraLayout);
+        if (mCameraLayout != null) {
+            mCameraLayout.getHolder().removeCallback(mCameraLayout);
+        }
 
         mCameraManager.unbindListenner();
         try {
+            //释放资源
+//            if (mCameraLayout.getHolder() != null) {
+//                if (Build.VERSION.SDK_INT >= 14) {
+//                    mCameraLayout.getHolder().getSurface().release();
+//                }
+//            }
             mCamera.setPreviewCallback(null);
             mCamera.cancelAutoFocus();
             mCamera.stopPreview();
@@ -237,14 +249,26 @@ public class CustomCameraHelper implements View.OnTouchListener {
     }
 
     public void onResume() {
-        LogUtils.d("............destroyed");
+        LogUtils.d("............onResume");
+        if (mCamera == null && iCameraView != null) {//当从另一个Activity返回回来时候重新绑定View参数
+            bindView(iCameraView);
+        }
         mSensorControler.onStart();
         mCameraLayout.initSoundPool();
-        if (mCameraLayout != null && mCameraLayout.getCameraSurfaceView().getVisibility() == View.INVISIBLE) {
+        if (mCameraLayout != null || mCameraLayout.getCameraSurfaceView().getVisibility() == View.INVISIBLE) {
             mCameraLayout.getHolder().addCallback(mCameraLayout);
             mCameraLayout.getCameraSurfaceView().setVisibility(View.VISIBLE);
         }
 
+    }
+
+    public void bindView(ICameraView iCameraView) {
+        if (iCameraView != null) {
+            this.iCameraView = iCameraView;
+            if (iCameraView.cameraLayout() != null)
+                iCameraView.cameraRootViewGrop().removeAllViews();
+            iCameraView.cameraRootViewGrop().addView(iCameraView.cameraLayout());
+        }
     }
 
     public void onPause() {
@@ -254,7 +278,7 @@ public class CustomCameraHelper implements View.OnTouchListener {
         if (mCamera == null) {
             return;
         }
-        realeseCamera();
+//        realeseCamera();
 //        mCameraManager.releaseCamera(mCameraLayout);
     }
 
@@ -414,7 +438,7 @@ public class CustomCameraHelper implements View.OnTouchListener {
      *
      * @return 是否处于录制中的状态
      */
-    public boolean startCamera() {
+    public boolean doPicOrVid() {
         if (coustomParams.cameraType != null) {
             if (coustomParams.cameraType == ECameraType.CAMERA_TAKE_PHOTO) {//拍照
                 if (coustomParams.picSize != null) {
