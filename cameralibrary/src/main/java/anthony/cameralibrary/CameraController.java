@@ -4,12 +4,11 @@ import android.content.Context;
 import android.hardware.Camera;
 import android.widget.ImageView;
 
-import anthony.cameralibrary.constant.ECameraScaleType;
+import anthony.cameralibrary.constant.EPreviewScaleType;
 import anthony.cameralibrary.constant.ECameraType;
 import anthony.cameralibrary.constant.EFouceMode;
 import anthony.cameralibrary.constant.ESaveDirectionType;
 import anthony.cameralibrary.iml.ICameraListenner;
-import anthony.cameralibrary.util.SizeUtils;
 
 /**
  * 主要功能:
@@ -28,14 +27,16 @@ public class CameraController {
         public ImageView previewImageView; //预览的imageview
         public Camera.Size picSize;//拍摄的照片分辨率（必须是相机可支持的分辨率camera.getParameters().getPictureSize()）
         public Camera.Size vidSize;//拍摄的视频拍摄分辨率（必须是相机可支持的分辨率camera.getParameters().getSupportedVideoSizes()）
+        public Camera.Size preSize;//预览分辨率（必须是相机可支持的分辨率camera.getParameters().getSupportedVideoSizes()）
 //        public boolean loadSettingParams = false;//是否加载本地已设置的数据（通过SettingFragment储存的参数）  默认不加载
         public boolean enableZoom = false;//默认禁用缩放功能
         public int maxZoom = -1;//最大缩放值（值为-1时候表示，使用系统最大缩放）
         public boolean showFouceImg = false;//是否显示聚焦时候的图片（暂时只支持自带）
         public boolean openFouceVic = false;//是否打开聚焦时候的音效（暂时只支持自带）
         public EFouceMode eFouceMode = EFouceMode.AUTOPOINTFOUCEMODEL;//默认是自动+指定点对焦模式
-        public ECameraScaleType eCameraScaleType = ECameraScaleType.CENTER_AUTO;//默认自动测量防止图形变形模式
+        public EPreviewScaleType ePreviewScaleType = EPreviewScaleType.AJUST_PREVIEW;//默认自动测量防止图形变形模式
         public ESaveDirectionType eSaveDirectionType = ESaveDirectionType.NORMAL;//默认正常模式
+        public CameraManager.FlashLigthStatus flashLigthStatus = CameraManager.FlashLigthStatus.LIGHT_AUTO;//设置闪光灯模式
         public CameraParams(Context c, ICameraListenner i) {
             this.context = c;
             this.iCameraListenner = i;

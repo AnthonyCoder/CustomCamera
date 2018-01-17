@@ -8,7 +8,7 @@ import android.widget.ImageView;
  * 修改历史：
  */
 
-public enum ECameraScaleType {
-    CENTER_AUTO,
-    FIT_XY,
+public enum EPreviewScaleType {
+    AJUST_SCREEN,
+    AJUST_PREVIEW
 }

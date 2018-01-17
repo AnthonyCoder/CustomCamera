@@ -3,22 +3,21 @@ package anthony.camerademo.coustom;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.FrameLayout;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import anthony.camerademo.R;
 import anthony.cameralibrary.CameraManager;
-import anthony.cameralibrary.constant.ECameraScaleType;
+import anthony.cameralibrary.constant.EPreviewScaleType;
 import anthony.cameralibrary.constant.EFouceMode;
 import anthony.cameralibrary.widget.CameraLayout;
-import anthony.cameralibrary.widget.CameraSurfaceView;
 import anthony.cameralibrary.CustomCameraHelper;
 import anthony.cameralibrary.constant.ECameraType;
 import anthony.cameralibrary.iml.ICameraListenner;
@@ -28,13 +27,13 @@ import anthony.cameralibrary.iml.ICameraListenner;
  * Created by wz on 2017/11/20
  * 修订历史:
  */
-public class PictureActivity extends Activity implements View.OnClickListener,ICameraListenner {
+public class PictureActivity extends Activity implements View.OnClickListener, ICameraListenner {
     private CameraLayout cameraLayout;
     private Context mContext;
     private ImageView iv_preview;
     private CheckBox cbSwithDir;
     private TextView tv_camera_dir;
-
+    private ImageButton ib_recentpic;
     private FrameLayout frameLayout;
 
     @Override
@@ -55,11 +54,13 @@ public class PictureActivity extends Activity implements View.OnClickListener,IC
         findViewById(R.id.ib_takephoto).setOnClickListener(this);
         iv_preview.setOnClickListener(this);
         cbSwithDir = findViewById(R.id.ck_switch_dir);
+        ib_recentpic = findViewById(R.id.ib_recentpic);
+        ib_recentpic.setOnClickListener(this);
         cbSwithDir.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
                 CustomCameraHelper.getInstance().switchCamera();
-                    tv_camera_dir.setText("方向："+(b?"前":"后")+"置摄像头");
+                tv_camera_dir.setText("方向：" + (b ? "前" : "后") + "置摄像头");
             }
         });
     }
@@ -68,9 +69,9 @@ public class PictureActivity extends Activity implements View.OnClickListener,IC
         cameraLayout = new CameraLayout.Builder(mContext, this)
                 .setCameraType(ECameraType.CAMERA_TAKE_PHOTO)
                 .setShowFouceImg(true)
-                .setOpenFouceVic(true)
-                .setECameraScaleType(ECameraScaleType.CENTER_AUTO)
-                .setZoomEnable(false,100)
+                .setOpenFouceVic(false)
+                .setEPreviewScaleType(EPreviewScaleType.AJUST_PREVIEW)
+                .setZoomEnable(false, 100)
                 .setFouceModel(EFouceMode.AUTOPOINTFOUCEMODEL)
                 .setPreviewImageView(iv_preview).setOutPutDirName("images")
                 .setFileName("test.jpg")
@@ -116,21 +117,35 @@ public class PictureActivity extends Activity implements View.OnClickListener,IC
                     startActivity(showIntent);
                 }
                 break;
+            case R.id.ib_recentpic://闪光灯切换
+                CustomCameraHelper.getInstance().switchFlashLight();
+                break;
         }
     }
 
     @Override
     public void error(String msg) {
-        ToastUtils.showShortToast(mContext,msg);
+        ToastUtils.showShortToast(mContext, msg);
     }
 
     @Override
     public void switchCameraDirection(CameraManager.CameraDirection cameraDirection) {
 
+        ToastUtils.showShortToast(mContext, cameraDirection == CameraManager.CameraDirection.CAMERA_BACK ? "后置" : "前置");
     }
 
     @Override
     public void switchLightStatus(CameraManager.FlashLigthStatus flashLigthStatus) {
-
+        switch (flashLigthStatus) {
+            case LIGHT_ON:
+                ib_recentpic.setBackground(getResources().getDrawable(R.drawable.selector_btn_flashlight_on));
+                break;
+            case LIGTH_OFF:
+                ib_recentpic.setBackground(getResources().getDrawable(R.drawable.selector_btn_flashlight_off));
+                break;
+            case LIGHT_AUTO:
+                ib_recentpic.setBackground(getResources().getDrawable(R.drawable.selector_btn_flashlight_auto));
+                break;
+        }
     }
 }

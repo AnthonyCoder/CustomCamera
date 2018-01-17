@@ -7,6 +7,8 @@ import android.view.MotionEvent;
 
 import java.util.List;
 
+import anthony.cameralibrary.constant.EPreviewScaleType;
+
 /**
  * 主要功能：
  * Created by wz on 2017/12/21.
@@ -38,7 +40,49 @@ public class SizeUtils {
 
         return sizeList.get(0);
     }
+
+    /**
+     * 获取最佳的预览View的分辨率
+     * @param sizes
+     * @param w
+     * @param h
+     * @return
+     */
+    public static Camera.Size getOptimalPreviewSize(List<Camera.Size> sizes, int w, int h) {
+        final double ASPECT_TOLERANCE = 0.1;
+        double targetRatio = (double) w / h;
+        if (sizes == null) return null;
+        Camera.Size optimalSize = null;
+        double minDiff = Double.MAX_VALUE;
+        int targetHeight = h;
+        // Try to find an size match aspect ratio and size
+        for (Camera.Size size : sizes) {
+            double ratio = (double) size.width / size.height;
+            if (Math.abs(ratio - targetRatio) > ASPECT_TOLERANCE) continue;
+            if (Math.abs(size.height - targetHeight) < minDiff) {
+                optimalSize = size;
+                minDiff = Math.abs(size.height - targetHeight);
+            }
+        }
+        // Cannot find the one match the aspect ratio, ignore the requirement
+        if (optimalSize == null) {
+            minDiff = Double.MAX_VALUE;
+            for (Camera.Size size : sizes) {
+                if (Math.abs(size.height - targetHeight) < minDiff) {
+                    optimalSize = size;
+                    minDiff = Math.abs(size.height - targetHeight);
+                }
+            }
+        }
+        return optimalSize;
+    }
     //分辨率是否支持适配列表
+    public static boolean isSurpportDrivse(List<Camera.Size> surpportList, Camera.Size size){
+        if(size == null){
+            return false;
+        }
+        return isSurpportDrivse(surpportList,size.width,size.height);
+    }
     public static boolean isSurpportDrivse(List<Camera.Size> surpportList,int w,int h){
         if(surpportList==null||surpportList.size()<1){
             return false;

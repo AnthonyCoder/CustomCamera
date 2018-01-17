@@ -1,51 +1,36 @@
 package anthony.cameralibrary;
 
-import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Point;
-import android.graphics.Rect;
 import android.hardware.Camera;
 import android.media.CamcorderProfile;
 import android.media.MediaRecorder;
 import android.media.ThumbnailUtils;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
-import android.os.SystemClock;
 import android.provider.MediaStore;
 import android.support.annotation.Nullable;
 import android.util.Log;
-import android.view.Display;
 import android.view.MotionEvent;
-import android.view.Surface;
 import android.view.View;
-import android.view.ViewGroup;
-import android.view.WindowManager;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
-import anthony.cameralibrary.constant.ECameraScaleType;
+import anthony.cameralibrary.constant.EPreviewScaleType;
 import anthony.cameralibrary.constant.EFouceMode;
-import anthony.cameralibrary.constant.ESaveDirectionType;
-import anthony.cameralibrary.constant.SPConstants;
 import anthony.cameralibrary.constant.ECameraType;
 import anthony.cameralibrary.iml.ICameraListenner;
 import anthony.cameralibrary.util.BitmapUtils;
 import anthony.cameralibrary.util.LogUtils;
-import anthony.cameralibrary.util.SPConfigUtil;
 import anthony.cameralibrary.util.SizeUtils;
 import anthony.cameralibrary.widget.CameraLayout;
-import anthony.cameralibrary.widget.CameraSurfaceView;
 import anthony.cameralibrary.widget.FocusImageView;
 
 /**
@@ -82,7 +67,7 @@ public class CustomCameraHelper implements View.OnTouchListener {
     private int currenZoom = 0;
 
     private EFouceMode mFouceMode;//对焦模式
-    private ECameraScaleType eCameraScaleType;//比例模式
+    private EPreviewScaleType ePreviewScaleType;//比例模式
     private boolean autoFouce = false;
     private boolean pointFouce = false;
 
@@ -99,9 +84,10 @@ public class CustomCameraHelper implements View.OnTouchListener {
         this.cameraDirection = mCameraManager.getCameraDirection();
         this.mSensorControler = SensorControler.getInstance();
         this.mFouceMode = coustomParams.eFouceMode;
-        this.eCameraScaleType = coustomParams.eCameraScaleType;
+        this.ePreviewScaleType = coustomParams.ePreviewScaleType;
         mCameraManager.initCameraLayout(mCameraLayout);
-        mCameraManager.initScaleType(eCameraScaleType);
+        mCameraManager.initScaleType(ePreviewScaleType);
+        mCameraManager.setLightStatus(coustomParams.flashLigthStatus);
         initFouceModel();
         if (pointFouce || coustomParams.enableZoom) {//如果打开了指定点对焦或者缩放功能则监听触摸事件
             mCameraLayout.setOnTouchListener(this);
@@ -137,27 +123,31 @@ public class CustomCameraHelper implements View.OnTouchListener {
 
     public void create() {
         LogUtils.d("............create");
-        if(null == mCamera){
-            setUpCamera(cameraDirection, false);
+        if (null == mCamera) {
+            setUpCamera();
         }
     }
-
+    //切换相机头
     public void switchCamera() {
         cameraDirection = cameraDirection.next();
         realeseCamera();
 //        mCameraManager.releaseCamera(mCameraLayout);
 
-        setUpCamera(cameraDirection, cameraDirection == CameraManager.CameraDirection.CAMERA_BACK);
+        setUpCamera();
     }
-
+    //切换闪光灯
+    public void switchFlashLight(){
+        mCameraManager.turnLight(mCameraManager.getLightStatus().next());
+    }
 
     /**
      * 设置当前的Camera 并进行参数设置
-     *
-     * @param mCameraId
      */
-    private void setUpCamera(CameraManager.CameraDirection mCameraId, boolean isSwitchFromFront) {
+    private void setUpCamera() {
+
+        boolean isSwitchFromFront = cameraDirection == CameraManager.CameraDirection.CAMERA_BACK;
         int facing = cameraDirection.ordinal();
+        mCameraManager.bindListenner(iCameraListenner);
         try {
             mCamera = mCameraManager.openCameraFacing(facing);
             mSensorControler.restFoucs();
@@ -168,16 +158,21 @@ public class CustomCameraHelper implements View.OnTouchListener {
             e.printStackTrace();
         }
         if (mCamera != null) {
-
             mCameraManager.setActivityCamera(mCamera);
             mCameraManager.setCameraDirection(cameraDirection);
+            if (coustomParams.picSize == null || !SizeUtils.isSurpportDrivse(parameters.getSupportedPictureSizes(), coustomParams.picSize)) {//如果未设置拍照分辨率，则默认系统的
+                coustomParams.picSize = mCameraManager.getSavePicSize();
+            }
+            if (coustomParams.vidSize == null || !SizeUtils.isSurpportDrivse(parameters.getSupportedVideoSizes(), coustomParams.vidSize)) {//如果未设置视频分辨率，则默认系统的
+                coustomParams.vidSize = mCameraManager.getSaveVidSize();
+            }
+            if (coustomParams.preSize == null || !SizeUtils.isSurpportDrivse(parameters.getSupportedPreviewSizes(), coustomParams.preSize)) {//如果未设置预览分辨率，则默认系统的
+                coustomParams.preSize = mCameraManager.getPreViewSizeByScaleType();
+            }
+            mCameraManager.turnLight(mCameraManager.getLightStatus());
             try {
                 mCamera.setPreviewDisplay(mCameraLayout.getHolder());
                 parameters = mCamera.getParameters();
-
-                if(eCameraScaleType == ECameraScaleType.CENTER_AUTO){
-                    mCameraManager.adjustDisplayRatio(parameters);
-                }
                 currenZoom = parameters.getZoom();
                 List<String> focusModes = parameters.getSupportedFocusModes();
                 for (String mode : focusModes) {
@@ -187,7 +182,7 @@ public class CustomCameraHelper implements View.OnTouchListener {
                     }
                 }
                 try {
-                    mCamera.setParameters(parameters);
+                    parameters.setPreviewSize(coustomParams.preSize.width, coustomParams.preSize.height);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -200,35 +195,19 @@ public class CustomCameraHelper implements View.OnTouchListener {
                 }
                 mCameraManager.initDisplayOrientation(parameters);
                 mCamera.startPreview();
-                if(iCameraListenner!=null){
+                if (iCameraListenner != null) {
                     iCameraListenner.switchCameraDirection(cameraDirection);
                 }
 
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            if(coustomParams.picSize==null){//如果未设置拍照分辨率，则默认系统的
-                coustomParams.picSize = SizeUtils.getAjustSizeFromScreen(mCamera.getParameters().getSupportedPictureSizes(), context);
-            }
-            if(coustomParams.vidSize==null){//如果未设置视频分辨率，则默认系统的
-                coustomParams.vidSize = SizeUtils.getAjustSizeFromScreen(mCamera.getParameters().getSupportedVideoSizes(), context);
-            }
+
         }
     }
 
-
-    //实现的图像的正确显示
-    private void setDisplayOrientation(Camera camera, int i) {
-        Method downPolymorphic;
-        try {
-            downPolymorphic = camera.getClass().getMethod("setDisplayOrientation",
-                    new Class[]{int.class});
-            if (downPolymorphic != null) {
-                downPolymorphic.invoke(camera, new Object[]{i});
-            }
-        } catch (Exception e) {
-            Log.e("Came_e", "图像出错");
-        }
+    public void change() {
+        setUpCamera();
     }
 
     public void onDestroy() {
@@ -242,6 +221,8 @@ public class CustomCameraHelper implements View.OnTouchListener {
             return;
         }
         mCameraLayout.getHolder().removeCallback(mCameraLayout);
+
+        mCameraManager.unbindListenner();
         try {
             mCamera.setPreviewCallback(null);
             mCamera.cancelAutoFocus();
@@ -281,11 +262,7 @@ public class CustomCameraHelper implements View.OnTouchListener {
     //开始拍照
     public boolean takePicture() {
         mCamera.stopPreview();
-        if (getSize() == null) {
-            return false;
-        }
-        LogUtils.d("......................w:" + getSize().width + "。。。。。。。h:" + getSize().height);
-        parameters.setPictureSize(getSize().width, getSize().height);
+        parameters.setPictureSize(coustomParams.picSize.width, coustomParams.picSize.height);
         mCamera.setParameters(parameters);
         mCamera.startPreview();
         try {
@@ -298,13 +275,13 @@ public class CustomCameraHelper implements View.OnTouchListener {
                         iCameraListenner.error("Error creating media file, check storage permissions");
                         return;
                     }
-                    if(BitmapUtils.saveTakePicFile(data,pictureFile, cameraDirection, coustomParams.eSaveDirectionType)){
+                    if (BitmapUtils.saveTakePicFile(data, pictureFile, cameraDirection, coustomParams.eSaveDirectionType)) {
                         if (coustomParams.previewImageView != null) {
                             coustomParams.previewImageView.setImageURI(null);
                             coustomParams.previewImageView.setImageURI(Uri.fromFile(pictureFile));
                         }
-                    }else{
-                        iCameraListenner.error("拍照失败" );
+                    } else {
+                        iCameraListenner.error("拍照失败");
                     }
 //                    try {
 //                        FileOutputStream fos = new FileOutputStream(pictureFile);
@@ -344,61 +321,6 @@ public class CustomCameraHelper implements View.OnTouchListener {
 
     }
 
-    //获取分辨率
-    @Nullable
-    private Camera.Size getSize() {
-        int[] sizeList = new int[2];
-//        if (coustomParams.loadSettingParams) {//本地加载
-//            if (coustomParams.cameraType == ECameraType.CAMERA_TAKE_PHOTO) {//拍照
-//                String prefPicSize = SPConfigUtil.load(SPConstants.KEY_PREF_PIC_SIZE, "");
-//                if (prefPicSize == null || prefPicSize.trim().isEmpty()) {//本地没有 就使用默认或者用户定义的分辨率
-//                    if (coustomParams.picSize == null) {
-//                        iCameraListenner.error("相机没有可支持的拍照分辨率参数");
-//                        return null;
-//                    }
-//                    //检查用户参数是否合法 不合法则默认适应屏幕分辨率
-//                    if (!SizeUtils.isSurpportDrivse(parameters.getSupportedVideoSizes(), coustomParams.picSize.width, coustomParams.picSize.height)) {
-//                        coustomParams.picSize = SizeUtils.getAjustSizeFromScreen(parameters.getSupportedPictureSizes(), context);
-//                    }
-//                }
-//                return coustomParams.picSize;
-//            } else if (coustomParams.cameraType == ECameraType.CAMERA_VIDEO) {//拍视频
-//                String prefVideoSize = SPConfigUtil.load(SPConstants.KEY_PREF_VIDEO_SIZE, "");
-//                if (prefVideoSize == null || prefVideoSize.trim().isEmpty()) {
-//                    if (coustomParams.vidSize == null) {
-//                        iCameraListenner.error("相机没有可支持的视频分辨率参数");
-//                        return null;
-//                    }
-//                    if (!SizeUtils.isSurpportDrivse(parameters.getSupportedVideoSizes(), coustomParams.vidSize.width, coustomParams.vidSize.height)) {
-//                        coustomParams.vidSize = SizeUtils.getAjustSizeFromScreen(parameters.getSupportedVideoSizes(), context);
-//                    }
-//
-//                } else {
-//                    try {
-//                        String[] s = prefVideoSize.split("x");
-//                        coustomParams.vidSize.width = Integer.parseInt(s[0].trim());
-//                        coustomParams.vidSize.height = Integer.parseInt(s[1].trim());
-//                    } catch (Exception e) {
-//                        coustomParams.vidSize = SizeUtils.getAjustSizeFromScreen(parameters.getSupportedVideoSizes(), context);
-//                    }
-//                    if (!SizeUtils.isSurpportDrivse(parameters.getSupportedVideoSizes(), coustomParams.vidSize.width, coustomParams.vidSize.height)) {
-//                        coustomParams.vidSize = SizeUtils.getAjustSizeFromScreen(parameters.getSupportedVideoSizes(), context);
-//                    }
-//                }
-//
-//                return coustomParams.vidSize;
-//            }
-//            return null;
-//
-//        } else {//加载用户配置参数
-        if (coustomParams.cameraType == ECameraType.CAMERA_TAKE_PHOTO) {//拍照
-            return coustomParams.picSize;
-        } else if (coustomParams.cameraType == ECameraType.CAMERA_VIDEO) {//视频
-            return coustomParams.vidSize;
-        }
-        return null;
-//        }
-    }
 
     /**
      * 开始录制
@@ -407,12 +329,7 @@ public class CustomCameraHelper implements View.OnTouchListener {
      */
     private boolean startRecording() {
         if (prepareVideoRecorder()) {
-//            try{
             mMediaRecorder.start();
-//            }catch (Exception e){
-//                iCameraListenner.error("启动相机失败"+e.getMessage());
-//                return false;
-//            }
             return true;
         } else {
             releaseMediaRecorder();
@@ -458,13 +375,10 @@ public class CustomCameraHelper implements View.OnTouchListener {
             iCameraListenner.error("请检查视频录制权限是否打开");
             return false;
         }
-        if (getSize() == null) {
-            return false;
-        }
         mMediaRecorder.setProfile(CamcorderProfile.get(CamcorderProfile.QUALITY_HIGH));
 
-        Log.e("相机", "......................w:" + getSize().width + "。。。。。。。h:" + getSize().height);
-        mMediaRecorder.setVideoSize(getSize().width, getSize().height);
+        Log.e("相机", "......................w:" + coustomParams.vidSize.width + "。。。。。。。h:" + coustomParams.vidSize.height);
+        mMediaRecorder.setVideoSize(coustomParams.vidSize.width, coustomParams.vidSize.height);
 
         mMediaRecorder.setOutputFile(getOutputMediaFile(ECameraType.CAMERA_VIDEO).toString());
 
@@ -503,11 +417,18 @@ public class CustomCameraHelper implements View.OnTouchListener {
     public boolean startCamera() {
         if (coustomParams.cameraType != null) {
             if (coustomParams.cameraType == ECameraType.CAMERA_TAKE_PHOTO) {//拍照
-                takePicture();
-                mSensorControler.unlockFocus();
+                if (coustomParams.picSize != null) {
+                    takePicture();
+                    mSensorControler.unlockFocus();
+                }
                 return true;
             } else if (coustomParams.cameraType == ECameraType.CAMERA_VIDEO) {//录制视频
-                return startRecording();
+                if (coustomParams.vidSize != null) {
+                    return startRecording();
+                } else {
+                    return false;
+                }
+
             }
         }
         return false;

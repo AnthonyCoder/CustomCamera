@@ -5,27 +5,25 @@ import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.hardware.Camera;
-import android.media.AudioManager;
-import android.media.SoundPool;
 import android.os.Build;
 import android.util.Log;
 import android.view.Display;
 import android.view.Surface;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.WindowManager;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
-import anthony.cameralibrary.constant.ECameraScaleType;
+import anthony.cameralibrary.constant.EPreviewScaleType;
 import anthony.cameralibrary.constant.SPConstants;
 import anthony.cameralibrary.iml.ICameraHelper;
 import anthony.cameralibrary.iml.ICameraListenner;
 import anthony.cameralibrary.iml.IOnFoucusOperation;
 import anthony.cameralibrary.util.LogUtils;
 import anthony.cameralibrary.util.SPConfigUtil;
+import anthony.cameralibrary.util.SizeUtils;
 import anthony.cameralibrary.widget.CameraLayout;
 
 import static android.os.Build.VERSION.SDK_INT;
@@ -48,7 +46,8 @@ public class CameraManager implements ICameraHelper,IOnFoucusOperation {
     private ICameraListenner iCameraListenner;
     private Camera mActivityCamera;
     private CameraLayout mCameraLayout;
-    private ECameraScaleType eCameraScaleType;
+    private EPreviewScaleType ePreviewScaleType;
+    private Camera.Size preSize,vidSize,picSize;
 
     //屏蔽默认构造方法
     private CameraManager(Context context) {
@@ -78,8 +77,8 @@ public class CameraManager implements ICameraHelper,IOnFoucusOperation {
     public void initCameraLayout(CameraLayout cameraLayout){
         this.mCameraLayout = cameraLayout;
     }
-    public void initScaleType(ECameraScaleType scaleType){
-        this.eCameraScaleType = scaleType;
+    public void initScaleType(EPreviewScaleType scaleType){
+        this.ePreviewScaleType = scaleType;
     }
     //绑定监听
     public void bindListenner(ICameraListenner iCameraListenner) {
@@ -263,12 +262,50 @@ public class CameraManager implements ICameraHelper,IOnFoucusOperation {
     //设置闪光灯状态
     public void setLightStatus(FlashLigthStatus mLightStatus) {
         this.mLightStatus = mLightStatus;
-
         if (iCameraListenner != null) {
             // 记录相机方向  会导致部分相机 前置摄像头
             SPConfigUtil.save(SPConstants.SP_LIGHT_STATUE, mLightStatus.ordinal() + "");
             iCameraListenner.switchLightStatus(mLightStatus);
         }
+    }
+    /**
+     * 闪光灯开关   开->关->自动
+     */
+    public void turnLight(CameraManager.FlashLigthStatus ligthStatus) {
+        if (CameraManager.mFlashLightNotSupport.contains(ligthStatus)) {
+            turnLight(ligthStatus.next());
+            return;
+        }
+
+        if (mActivityCamera == null || mActivityCamera.getParameters() == null
+                || mActivityCamera.getParameters().getSupportedFlashModes() == null || ligthStatus == null) {
+            return;
+        }
+        Camera.Parameters parameters = mActivityCamera.getParameters();
+        List<String> supportedModes = mActivityCamera.getParameters().getSupportedFlashModes();
+
+        switch (ligthStatus) {
+            case LIGHT_AUTO:
+                if (supportedModes.contains(Camera.Parameters.FLASH_MODE_AUTO)) {
+                    parameters.setFlashMode(Camera.Parameters.FLASH_MODE_AUTO);
+                }
+                break;
+            case LIGTH_OFF:
+                parameters.setFlashMode(Camera.Parameters.FLASH_MODE_OFF);
+                break;
+            case LIGHT_ON:
+                if (supportedModes.contains(Camera.Parameters.FLASH_MODE_ON)) {
+                    parameters.setFlashMode(Camera.Parameters.FLASH_MODE_ON);
+                } else if (supportedModes.contains(Camera.Parameters.FLASH_MODE_AUTO)) {
+                    parameters.setFlashMode(Camera.Parameters.FLASH_MODE_AUTO);
+                } else if (supportedModes.contains(Camera.Parameters.FLASH_MODE_OFF)) {
+                    parameters.setFlashMode(Camera.Parameters.FLASH_MODE_OFF);
+                }
+                break;
+        }
+        this.mLightStatus = ligthStatus;
+        iCameraListenner.switchLightStatus(ligthStatus);
+        mActivityCamera.setParameters(parameters);
     }
 
     //释放camera
@@ -309,12 +346,10 @@ public class CameraManager implements ICameraHelper,IOnFoucusOperation {
 
         parameters.setRotation(getDisplayOrientation());
         mActivityCamera.setParameters(parameters);
-        if(eCameraScaleType == ECameraScaleType.CENTER_AUTO){
-            adjustDisplayRatio(parameters);
-        }
 
 
     }
+
     //实现的图像的正确显示
     private void setDisplayOrientation(Camera camera, int i) {
         Method downPolymorphic;
@@ -328,6 +363,63 @@ public class CameraManager implements ICameraHelper,IOnFoucusOperation {
             Log.e("Came_e", "图像出错");
         }
     }
+    /**
+     * 将预览大小设置为屏幕大小
+     * @param parameters
+     * @return
+     */
+    public Camera.Size findPreviewSizeByScreen(Camera.Parameters parameters) {
+
+        int viewWidth =mCameraLayout.getWidth();
+        int viewHeight = mCameraLayout.getHeight();
+        if (viewWidth != 0 && viewHeight != 0) {
+            return mActivityCamera.new Size(Math.max(viewWidth, viewHeight),
+                    Math.min(viewWidth, viewHeight));
+        } else {
+            return mActivityCamera.new Size(CameraApplication.mScreenWidth,
+                    CameraApplication.mScreenHeight);
+        }
+    }
+
+    /**
+     * 获取预览分辨率
+     * @return
+     */
+    public Camera.Size getPreViewSizeByScaleType(){
+        if(preSize !=null){
+            return preSize;
+        }
+        if(ePreviewScaleType == EPreviewScaleType.AJUST_PREVIEW){
+            preSize =SizeUtils.getOptimalPreviewSize(mActivityCamera.getParameters().getSupportedPreviewSizes(), mCameraLayout.getWidth(),mCameraLayout.getHeight());
+        }
+        if(ePreviewScaleType == EPreviewScaleType.AJUST_SCREEN){
+            preSize = SizeUtils.getAjustSizeFromScreen(mActivityCamera.getParameters().getSupportedPreviewSizes(), mContext);
+        }
+        return preSize;
+    }
+    /**
+     * 获取视频保存的分辨率
+     * @return
+     */
+    public Camera.Size getSaveVidSize(){
+        if(vidSize !=null){
+            return vidSize;
+        }
+        vidSize = SizeUtils.getAjustSizeFromScreen(mActivityCamera.getParameters().getSupportedVideoSizes(), mContext);
+        return vidSize;
+    }
+    /**
+     * 获取照片保存的分辨率
+     * @return
+     */
+    public Camera.Size getSavePicSize(){
+        if(picSize !=null){
+            return picSize;
+        }
+        picSize = SizeUtils.getAjustSizeFromScreen(mActivityCamera.getParameters().getSupportedPictureSizes(), mContext);
+        return picSize;
+    }
+
     /**
      * 用于根据手机方向获得相机预览画面旋转的角度
      * 校正拍照的角度
@@ -369,46 +461,48 @@ public class CameraManager implements ICameraHelper,IOnFoucusOperation {
         return result;
     }
 
-    //自适应预览图片尺寸（防止预览画面变形）
-    public void adjustDisplayRatio(Camera.Parameters parameters) {
-        ViewGroup parent = ((ViewGroup) mCameraLayout.getParent());
-        Rect rect = new Rect();
-        parent.getLocalVisibleRect(rect);
-        final int width = rect.width();
-        final int height = rect.height();
-        Camera.Size previewSize = parameters.getPreviewSize();
-        int previewWidth;
-        int previewHeight;
-        if (getDisplayOrientation() == 90 || getDisplayOrientation() == 270) {
-            previewWidth = previewSize.height;
-            previewHeight = previewSize.width;
-        } else {
-            previewWidth = previewSize.width;
-            previewHeight = previewSize.height;
-        }
-        View.OnLayoutChangeListener layoutChangeListener;
-        if (width * previewHeight > height * previewWidth) {
-            final int scaledChildWidth = previewWidth * height / previewHeight;
-            layoutChangeListener = new View.OnLayoutChangeListener() {
-                @Override
-                public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
-                    mCameraLayout.layout((width - scaledChildWidth) / 2, 0,
-                            (width + scaledChildWidth) / 2, height);
-                }
-            };
-
-        } else {
-            final int scaledChildHeight = previewHeight * width / previewWidth;
-            layoutChangeListener = new View.OnLayoutChangeListener() {
-                @Override
-                public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
-                    mCameraLayout.layout(0, (height - scaledChildHeight) / 2,
-                            width, (height + scaledChildHeight) / 2);
-                }
-            };
-        }
-        mCameraLayout.addOnLayoutChangeListener(layoutChangeListener);
-    }
+//    //自适应预览图片尺寸（防止预览画面变形）
+//    public void adjustDisplayRatio(Camera.Parameters parameters) {
+//        ViewGroup parent = ((ViewGroup) mCameraLayout.getParent());
+//        Rect rect = new Rect();
+//        parent.getLocalVisibleRect(rect);
+//        final int width = rect.width();
+//        final int height = rect.height();
+//        Camera.Size previewSize = parameters.getPreviewSize();
+//        int previewWidth;
+//        int previewHeight;
+//        if (getDisplayOrientation() == 90 || getDisplayOrientation() == 270) {
+//            previewWidth = previewSize.height;
+//            previewHeight = previewSize.width;
+//        } else {
+//            previewWidth = previewSize.width;
+//            previewHeight = previewSize.height;
+//        }
+//        View.OnLayoutChangeListener layoutChangeListener;
+//        if (width * previewHeight > height * previewWidth) {
+//            final int scaledChildWidth = previewWidth * height / previewHeight;
+//            layoutChangeListener = new View.OnLayoutChangeListener() {
+//                @Override
+//                public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
+//                    mCameraLayout.layout((width - scaledChildWidth) / 2, 0,
+//                            (width + scaledChildWidth) / 2, height);
+////                    mCameraLayout.removeOnLayoutChangeListener(this);
+//                }
+//            };
+//
+//        } else {
+//            final int scaledChildHeight = previewHeight * width / previewWidth;
+//            layoutChangeListener = new View.OnLayoutChangeListener() {
+//                @Override
+//                public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
+//                    mCameraLayout.layout(0, (height - scaledChildHeight) / 2,
+//                            width, (height + scaledChildHeight) / 2);
+////                    mCameraLayout.removeOnLayoutChangeListener(this);
+//                }
+//            };
+//        }
+//        mCameraLayout.addOnLayoutChangeListener(layoutChangeListener);
+//    }
 //    private void realeseCamera() {
 //        if (mCamera == null) {
 //            return;
@@ -427,4 +521,6 @@ public class CameraManager implements ICameraHelper,IOnFoucusOperation {
 //            mCamera = null;
 //        }
 //    }
+
+
 }
