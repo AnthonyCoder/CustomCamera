@@ -13,9 +13,10 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 
 import anthony.cameralibrary.CameraController;
+import anthony.cameralibrary.CameraManager;
 import anthony.cameralibrary.CustomCameraHelper;
 import anthony.cameralibrary.R;
-import anthony.cameralibrary.constant.ECameraScaleType;
+import anthony.cameralibrary.constant.EPreviewScaleType;
 import anthony.cameralibrary.constant.ECameraType;
 import anthony.cameralibrary.constant.EFouceMode;
 import anthony.cameralibrary.constant.ESaveDirectionType;
@@ -64,7 +65,7 @@ public class CameraLayout extends FrameLayout implements SurfaceHolder.Callback 
 
     @Override
     public void surfaceChanged(SurfaceHolder surfaceHolder, int i, int i1, int i2) {//大小发生变化时候
-//        CustomCameraHelper.getInstance().change();
+        CustomCameraHelper.getInstance().change();
     }
 
     @Override
@@ -147,13 +148,18 @@ public class CameraLayout extends FrameLayout implements SurfaceHolder.Callback 
             P.eFouceMode = eFouceMode;
             return this;
         }
-        public Builder setECameraScaleType(ECameraScaleType eCameraScaleType) {//设置比例模式
-            P.eCameraScaleType = eCameraScaleType;
+        public Builder setEPreviewScaleType(EPreviewScaleType ePreviewScaleType) {//设置比例模式
+            P.ePreviewScaleType = ePreviewScaleType;
             return this;
         }
 
-        public Builder setECameraScaleType(ESaveDirectionType eSaveDirectionType) {//设置成像模式
+        public Builder setEPreviewScaleType(ESaveDirectionType eSaveDirectionType) {//设置成像模式
             P.eSaveDirectionType = eSaveDirectionType;
+            return this;
+        }
+
+        public Builder setFlashLigthStatus(CameraManager.FlashLigthStatus flashLigthStatus) {//设置闪光灯模式
+            P.flashLigthStatus = flashLigthStatus;
             return this;
         }
 
