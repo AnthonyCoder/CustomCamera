@@ -67,21 +67,6 @@ public class PictureActivity extends Activity implements View.OnClickListener, I
         });
     }
 
-//    private void initCamera() {
-//        cameraLayout = new CameraLayout.Builder(mContext, this)
-//                .setCameraType(ECameraType.CAMERA_TAKE_PHOTO)
-//                .setShowFouceImg(true)
-//                .setOpenFouceVic(false)
-//                .setEPreviewScaleType(EPreviewScaleType.AJUST_PREVIEW)
-//                .setZoomEnable(false, 100)
-//                .setFouceModel(EFouceMode.AUTOPOINTFOUCEMODEL)
-//                .setPreviewImageView(iv_preview).setOutPutDirName("images")
-//                .setFileName("test.jpg")
-//                .buildCamera();
-//        if (cameraLayout.getParent() != null)
-//            ((ViewGroup) cameraLayout.getParent()).removeAllViews();
-//        frameLayout.addView(cameraLayout);
-//    }
 
     /**
      * 锁屏时候这个方法也会被调用
