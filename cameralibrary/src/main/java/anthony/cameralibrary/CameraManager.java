@@ -395,6 +395,7 @@ public class CameraManager implements ICameraHelper,IOnFoucusOperation {
         if(ePreviewScaleType == EPreviewScaleType.AJUST_SCREEN){
             preSize = SizeUtils.getAjustSizeFromScreen(mActivityCamera.getParameters().getSupportedPreviewSizes(), mContext);
         }
+        LogUtils.d("预览分辨率  w:"+preSize.width+"   h:"+preSize.height);
         return preSize;
     }
     /**
@@ -406,6 +407,8 @@ public class CameraManager implements ICameraHelper,IOnFoucusOperation {
             return vidSize;
         }
         vidSize = SizeUtils.getAjustSizeFromScreen(mActivityCamera.getParameters().getSupportedVideoSizes(), mContext);
+
+        LogUtils.d("视频分辨率  w:"+vidSize.width+"   h:"+vidSize.height);
         return vidSize;
     }
     /**
@@ -417,6 +420,7 @@ public class CameraManager implements ICameraHelper,IOnFoucusOperation {
             return picSize;
         }
         picSize = SizeUtils.getAjustSizeFromScreen(mActivityCamera.getParameters().getSupportedPictureSizes(), mContext);
+        LogUtils.d("照片分辨率  w:"+picSize.width+"   h:"+picSize.height);
         return picSize;
     }
 

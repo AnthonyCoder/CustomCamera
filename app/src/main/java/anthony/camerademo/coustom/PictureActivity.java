@@ -17,6 +17,7 @@ import anthony.camerademo.R;
 import anthony.cameralibrary.CameraManager;
 import anthony.cameralibrary.constant.EPreviewScaleType;
 import anthony.cameralibrary.constant.EFouceMode;
+import anthony.cameralibrary.iml.ICameraView;
 import anthony.cameralibrary.widget.CameraLayout;
 import anthony.cameralibrary.CustomCameraHelper;
 import anthony.cameralibrary.constant.ECameraType;
@@ -27,7 +28,7 @@ import anthony.cameralibrary.iml.ICameraListenner;
  * Created by wz on 2017/11/20
  * 修订历史:
  */
-public class PictureActivity extends Activity implements View.OnClickListener, ICameraListenner {
+public class PictureActivity extends Activity implements View.OnClickListener, ICameraListenner ,ICameraView{
     private CameraLayout cameraLayout;
     private Context mContext;
     private ImageView iv_preview;
@@ -43,7 +44,8 @@ public class PictureActivity extends Activity implements View.OnClickListener, I
         setContentView(R.layout.activity_picture);
         mContext = this;
         initView();
-        initCamera();
+//        initCamera();
+        CustomCameraHelper.getInstance().bindView(this);
     }
 
     private void initView() {
@@ -65,21 +67,21 @@ public class PictureActivity extends Activity implements View.OnClickListener, I
         });
     }
 
-    private void initCamera() {
-        cameraLayout = new CameraLayout.Builder(mContext, this)
-                .setCameraType(ECameraType.CAMERA_TAKE_PHOTO)
-                .setShowFouceImg(true)
-                .setOpenFouceVic(false)
-                .setEPreviewScaleType(EPreviewScaleType.AJUST_PREVIEW)
-                .setZoomEnable(false, 100)
-                .setFouceModel(EFouceMode.AUTOPOINTFOUCEMODEL)
-                .setPreviewImageView(iv_preview).setOutPutDirName("images")
-                .setFileName("test.jpg")
-                .startCamera();
-        if (cameraLayout.getParent() != null)
-            ((ViewGroup) cameraLayout.getParent()).removeAllViews();
-        frameLayout.addView(cameraLayout);
-    }
+//    private void initCamera() {
+//        cameraLayout = new CameraLayout.Builder(mContext, this)
+//                .setCameraType(ECameraType.CAMERA_TAKE_PHOTO)
+//                .setShowFouceImg(true)
+//                .setOpenFouceVic(false)
+//                .setEPreviewScaleType(EPreviewScaleType.AJUST_PREVIEW)
+//                .setZoomEnable(false, 100)
+//                .setFouceModel(EFouceMode.AUTOPOINTFOUCEMODEL)
+//                .setPreviewImageView(iv_preview).setOutPutDirName("images")
+//                .setFileName("test.jpg")
+//                .buildCamera();
+//        if (cameraLayout.getParent() != null)
+//            ((ViewGroup) cameraLayout.getParent()).removeAllViews();
+//        frameLayout.addView(cameraLayout);
+//    }
 
     /**
      * 锁屏时候这个方法也会被调用
@@ -88,16 +90,17 @@ public class PictureActivity extends Activity implements View.OnClickListener, I
      */
     @Override
     public void onPause() {
-        CustomCameraHelper.getInstance().onPause();
         super.onPause();
+        CustomCameraHelper.getInstance().onPause();
     }
 
 
     @Override
     public void onResume() {
-        CustomCameraHelper.getInstance().onResume();
         super.onResume();
+        CustomCameraHelper.getInstance().onResume();
     }
+
 
     @Override
     public void onClick(View view) {
@@ -107,7 +110,7 @@ public class PictureActivity extends Activity implements View.OnClickListener, I
                 break;
 
             case R.id.ib_takephoto://拍照
-                CustomCameraHelper.getInstance().startCamera();
+                CustomCameraHelper.getInstance().doPicOrVid();
                 break;
 
             case R.id.iv_preview://预览
@@ -130,8 +133,9 @@ public class PictureActivity extends Activity implements View.OnClickListener, I
 
     @Override
     public void switchCameraDirection(CameraManager.CameraDirection cameraDirection) {
-
-        ToastUtils.showShortToast(mContext, cameraDirection == CameraManager.CameraDirection.CAMERA_BACK ? "后置" : "前置");
+        boolean isfont = cameraDirection == CameraManager.CameraDirection.CAMERA_FRONT;
+        tv_camera_dir.setText("方向：" + (isfont ? "前" : "后") + "置摄像头");
+        cbSwithDir.setChecked(isfont);
     }
 
     @Override
@@ -147,5 +151,25 @@ public class PictureActivity extends Activity implements View.OnClickListener, I
                 ib_recentpic.setBackground(getResources().getDrawable(R.drawable.selector_btn_flashlight_auto));
                 break;
         }
+    }
+
+    @Override
+    public ViewGroup cameraRootViewGrop() {
+        return frameLayout;
+    }
+
+    @Override
+    public CameraLayout cameraLayout() {
+        cameraLayout = new CameraLayout.Builder(mContext, this)
+                .setCameraType(ECameraType.CAMERA_TAKE_PHOTO)
+                .setShowFouceImg(true)
+                .setOpenFouceVic(false)
+                .setEPreviewScaleType(EPreviewScaleType.AJUST_PREVIEW)
+                .setZoomEnable(false, 100)
+                .setFouceModel(EFouceMode.AUTOPOINTFOUCEMODEL)
+                .setPreviewImageView(iv_preview).setOutPutDirName("images")
+                .setFileName("test.jpg")
+                .buildCamera();
+        return cameraLayout;
     }
 }

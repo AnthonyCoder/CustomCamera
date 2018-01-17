@@ -67,7 +67,7 @@ public class VideoActivity extends Activity implements View.OnClickListener,ICam
                 .setZoomEnable(false,100)
                 .setPreviewImageView(iv_preview)
                 .setOutPutDirName("video")
-                .startCamera();
+                .buildCamera();
         if (cameraLayout.getParent() != null)
             ((ViewGroup) cameraLayout.getParent()).removeAllViews();
         preview.addView(cameraLayout);
@@ -95,7 +95,7 @@ public class VideoActivity extends Activity implements View.OnClickListener,ICam
                     CustomCameraHelper.getInstance().stopRecording();
                     start_record.setText("录制");
                 } else {
-                    if (CustomCameraHelper.getInstance().startCamera()) {
+                    if (CustomCameraHelper.getInstance().doPicOrVid()) {
                         start_record.setText("停止");
                     }
                 }
