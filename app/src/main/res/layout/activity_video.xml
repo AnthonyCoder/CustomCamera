@@ -1,42 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
+    android:orientation="vertical"
     android:layout_height="match_parent">
     <FrameLayout
         android:id="@+id/surface_view"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="0dp"
+        android:layout_weight="1"/>
     <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:background="#262626"
+        android:layout_height="250dp">
         <ImageView
-            android:id="@+id/iv_cancle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:src="@mipmap/icon_cancel"/>
-        <Button
-            android:id="@+id/start_record"
-            android:layout_alignParentBottom="true"
-            android:layout_centerHorizontal="true"
-            android:layout_marginBottom="20dp"
-            android:layout_width="80dp"
-            android:layout_height="50dp"
-            android:text="录制" />
+            android:id="@+id/iv_rever_camera"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_margin="30px"
+            android:src="@mipmap/icon_camera_rever"/>
         <ImageView
             android:id="@+id/iv_preview"
             android:layout_width="100dp"
             android:layout_alignParentBottom="true"
             android:layout_height="80dp" />
-        <Button
-            android:id="@+id/bt_setting"
+        <anthony.cameralibrary.widget.RingView
+            android:id="@+id/rv_start_camera"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="设置"
-            android:layout_marginBottom="20dp"
-            android:layout_alignParentBottom="true"
-            android:layout_alignParentRight="true"/>
+            android:layout_centerInParent="true"
+            android:layout_alignParentBottom="true"/>
     </RelativeLayout>
 
 
 
-</FrameLayout>
+</LinearLayout>

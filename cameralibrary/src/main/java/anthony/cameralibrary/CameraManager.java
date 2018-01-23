@@ -370,8 +370,8 @@ public class CameraManager implements ICameraHelper,IOnFoucusOperation {
      */
     public Camera.Size findPreviewSizeByScreen(Camera.Parameters parameters) {
 
-        int viewWidth =mCameraLayout.getWidth();
-        int viewHeight = mCameraLayout.getHeight();
+        int viewWidth =mCameraLayout.getMeasuredWidth();
+        int viewHeight = mCameraLayout.getMeasuredHeight();
         if (viewWidth != 0 && viewHeight != 0) {
             return mActivityCamera.new Size(Math.max(viewWidth, viewHeight),
                     Math.min(viewWidth, viewHeight));
@@ -390,7 +390,7 @@ public class CameraManager implements ICameraHelper,IOnFoucusOperation {
             return preSize;
         }
         if(ePreviewScaleType == EPreviewScaleType.AJUST_PREVIEW){
-            preSize =SizeUtils.getOptimalPreviewSize(mActivityCamera.getParameters().getSupportedPreviewSizes(), mCameraLayout.getWidth(),mCameraLayout.getHeight());
+            preSize =SizeUtils.getOptimalPreviewSize(mActivityCamera.getParameters().getSupportedPreviewSizes(), mCameraLayout.getMeasuredWidth(),mCameraLayout.getMeasuredHeight());
         }
         if(ePreviewScaleType == EPreviewScaleType.AJUST_SCREEN){
             preSize = SizeUtils.getAjustSizeFromScreen(mActivityCamera.getParameters().getSupportedPreviewSizes(), mContext);

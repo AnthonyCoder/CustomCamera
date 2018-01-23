@@ -11,4 +11,6 @@ public interface ICameraListenner {
     void error(String msg);
     void switchCameraDirection(CameraManager.CameraDirection cameraDirection);
     void switchLightStatus(CameraManager.FlashLigthStatus flashLigthStatus);
+    void takePhotoOver();
+    void recordOver();
 }

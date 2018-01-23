@@ -3,6 +3,7 @@ package anthony.camerademo.coustom;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
@@ -40,7 +41,7 @@ public class PictureActivity extends Activity implements View.OnClickListener, I
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-//        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);//设置横屏
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);//设置横屏
         setContentView(R.layout.activity_picture);
         mContext = this;
         initView();
@@ -136,6 +137,16 @@ public class PictureActivity extends Activity implements View.OnClickListener, I
                 ib_recentpic.setBackground(getResources().getDrawable(R.drawable.selector_btn_flashlight_auto));
                 break;
         }
+    }
+
+    @Override
+    public void takePhotoOver() {
+
+    }
+
+    @Override
+    public void recordOver() {
+
     }
 
     @Override
