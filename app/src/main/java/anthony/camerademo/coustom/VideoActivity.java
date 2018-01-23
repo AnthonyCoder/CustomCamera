@@ -96,6 +96,9 @@ public class VideoActivity extends Activity implements View.OnClickListener,ICam
                     startActivity(showIntent);
                 }
                 break;
+            case R.id.iv_rever_camera:
+                CustomCameraHelper.getInstance().switchCamera();
+                break;
         }
     }
 
