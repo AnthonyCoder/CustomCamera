@@ -304,6 +304,7 @@ public class CustomCameraHelper implements View.OnTouchListener {
                             coustomParams.previewImageView.setImageURI(null);
                             coustomParams.previewImageView.setImageURI(Uri.fromFile(pictureFile));
                         }
+                        iCameraListenner.takePhotoOver();
                     } else {
                         iCameraListenner.error("拍照失败");
                     }
@@ -369,12 +370,14 @@ public class CustomCameraHelper implements View.OnTouchListener {
                 mMediaRecorder.setOnInfoListener(null);
                 mMediaRecorder.setPreviewDisplay(null);
                 mMediaRecorder.stop();
+                iCameraListenner.recordOver();
             } catch (RuntimeException stopException) {
                 //handle cleanup here
             }
 
             if (coustomParams.previewImageView != null) {//预览视频第一帧的图片
                 Bitmap thumbnail = ThumbnailUtils.createVideoThumbnail(outputMediaFileUri.getPath(), MediaStore.Video.Thumbnails.MINI_KIND);
+                coustomParams.previewImageView.setImageBitmap(null);
                 coustomParams.previewImageView.setImageBitmap(thumbnail);
             }
 

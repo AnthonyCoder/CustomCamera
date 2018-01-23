@@ -8,11 +8,11 @@
         android:id="@+id/go_pic"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="自定义拍照功能演示"/>
+        android:text="拍照功能演示"/>
 
     <Button
         android:id="@+id/go_video"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="自定义录制功能演示"/>
+        android:text="仿微信拍照+小视频功能"/>
 </LinearLayout>

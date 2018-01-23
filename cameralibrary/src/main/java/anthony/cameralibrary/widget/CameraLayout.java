@@ -42,6 +42,11 @@ public class CameraLayout extends FrameLayout implements SurfaceHolder.Callback 
     public CameraLayout(@NonNull Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
     }
+    public void setCameraType(ECameraType eCameraType){
+        if(cameraParams != null ){
+            cameraParams.cameraType = eCameraType;
+        }
+    }
 
     private void initParams(CameraController.CameraParams cameraParams) {
         this.cameraParams = cameraParams;

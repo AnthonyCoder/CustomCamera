@@ -46,8 +46,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".coustom.PictureActivity"/>
-        <activity android:name=".coustom.VideoActivity"/>
+        <activity android:name=".coustom.PictureActivity"
+            android:screenOrientation="portrait"/>
+        <activity android:name=".coustom.VideoActivity"
+            android:screenOrientation="portrait"/>
         <activity android:name=".coustom.ShowActivity"/>
     </application>
 
